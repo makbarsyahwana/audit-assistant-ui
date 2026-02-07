@@ -18,8 +18,26 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { useEngagements } from "@/hooks/useEngagements";
+/* removed duplicate VerticalCutReveal import */
 import { formatDate, getInitials } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
@@ -44,6 +62,7 @@ export default function EngagementsPage() {
   const { engagements, loading } = useEngagements();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<EngagementStatus | "all">("all");
+  const [showCreate, setShowCreate] = useState(false);
 
   const filtered = engagements.filter((e) => {
     const matchesSearch =
@@ -68,10 +87,82 @@ export default function EngagementsPage() {
             Manage your audit engagements and their documents
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Engagement
-        </Button>
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Engagement
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Create Engagement</DialogTitle>
+              <DialogDescription>
+                Set up a new audit engagement with metadata and team.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Engagement Name</label>
+                <Input placeholder="e.g. ISO 27001 ISMS Audit 2025" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Input placeholder="Brief description of the engagement" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Entity Name</label>
+                  <Input placeholder="e.g. Acme Corporation" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Framework</label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iso27001">ISO 27001:2022</SelectItem>
+                      <SelectItem value="sox">SOX / COSO</SelectItem>
+                      <SelectItem value="gdpr">GDPR</SelectItem>
+                      <SelectItem value="cobit">COBIT 2019</SelectItem>
+                      <SelectItem value="nist">NIST CSF</SelectItem>
+                      <SelectItem value="internal">Internal SOP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Period Start</label>
+                  <Input type="date" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Period End</label>
+                  <Input type="date" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Initial Status</label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={() => setShowCreate(false)}>Create Engagement</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}

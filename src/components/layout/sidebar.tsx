@@ -9,6 +9,10 @@ import {
   Briefcase,
   Shield,
   FileSearch,
+  Users,
+  Activity,
+  Brain,
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -32,7 +36,11 @@ const auditNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
+  { label: "Users", href: "/admin/users", icon: Users },
   { label: "Audit Trail", href: "/admin/audit-trail", icon: FileSearch },
+  { label: "System Health", href: "/admin/health", icon: Activity },
+  { label: "AI Governance", href: "/admin/governance", icon: Brain },
+  { label: "Approvals", href: "/admin/approvals", icon: CheckSquare },
 ];
 
 export function Sidebar() {

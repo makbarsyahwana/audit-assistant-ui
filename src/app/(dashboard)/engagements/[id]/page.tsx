@@ -10,7 +10,10 @@ import {
   MessageSquare,
   AlertTriangle,
   BarChart3,
-  ExternalLink,
+  Shield,
+  Package,
+  ClipboardList,
+  PenTool,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,21 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { useEngagements } from "@/hooks/useEngagements";
-import { useDocuments } from "@/hooks/useDocuments";
-import { formatDate, formatDateTime, getInitials } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
 const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" | "draft" | "planning" | "archived"> = {
@@ -43,11 +36,18 @@ const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" 
   archived: "archived",
 };
 
+interface QuickLink {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  description: string;
+  count?: number;
+}
+
 export default function EngagementDetailPage() {
   const params = useParams();
   const engagementId = params.id as string;
   const { getEngagement, loading: engLoading } = useEngagements();
-  const { documents, loading: docsLoading } = useDocuments(engagementId);
 
   const engagement = getEngagement(engagementId);
 
@@ -72,6 +72,41 @@ export default function EngagementDetailPage() {
       </div>
     );
   }
+
+  const quickLinks: QuickLink[] = [
+    {
+      label: "Documents",
+      href: `/engagements/${engagementId}/documents`,
+      icon: FileText,
+      description: "Browse, search and upload documents",
+      count: engagement.stats.documentCount,
+    },
+    {
+      label: "Requirements",
+      href: `/engagements/${engagementId}/requirements`,
+      icon: Shield,
+      description: "Requirement–control mapping matrix",
+    },
+    {
+      label: "Evidence",
+      href: `/engagements/${engagementId}/evidence`,
+      icon: Package,
+      description: "Evidence pack builder",
+    },
+    {
+      label: "Workpapers",
+      href: `/engagements/${engagementId}/workpapers`,
+      icon: ClipboardList,
+      description: "Workpaper editor with AI drafting",
+    },
+    {
+      label: "Findings",
+      href: `/engagements/${engagementId}/findings`,
+      icon: PenTool,
+      description: "Finding drafting and tracking",
+      count: engagement.stats.findingCount,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -164,129 +199,69 @@ export default function EngagementDetailPage() {
         </Card>
       </div>
 
-      {/* Tabs: Documents & Team */}
-      <Tabs defaultValue="documents" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="documents">
-            <FileText className="mr-1.5 h-3.5 w-3.5" />
-            Documents ({documents.length})
-          </TabsTrigger>
-          <TabsTrigger value="team">
-            <Users className="mr-1.5 h-3.5 w-3.5" />
-            Team ({engagement.members.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Documents Tab */}
-        <TabsContent value="documents">
-          <Card>
-            <CardContent className="p-0">
-              {docsLoading ? (
-                <div className="p-6 space-y-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : documents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-medium">No documents yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Upload documents to start querying
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead className="text-right">Pages</TableHead>
-                      <TableHead className="text-right">Chunks</TableHead>
-                      <TableHead>Updated</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documents.map((doc) => (
-                      <TableRow key={doc.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="font-medium text-sm">
-                              {doc.title}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs capitalize">
-                            {doc.docType}
+      {/* Workflow Quick Links */}
+      <div>
+        <h2 className="text-base font-semibold mb-3">Workflow</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {quickLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link key={link.href} href={link.href}>
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/20 cursor-pointer group">
+                  <CardContent className="p-4 flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold group-hover:text-primary transition-colors">
+                          {link.label}
+                        </p>
+                        {link.count !== undefined && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {link.count}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {doc.sourceSystem}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {doc.pageCount ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {doc.chunkCount ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(doc.updatedAt)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {link.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Team Tab */}
-        <TabsContent value="team">
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Email</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {engagement.members.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                              {getInitials(member.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-sm">
-                            {member.name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {member.role.replace("_", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {member.email}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Team Section */}
+      <div>
+        <h2 className="text-base font-semibold mb-3">
+          <Users className="inline mr-1.5 h-4 w-4" />
+          Team ({engagement.members.length})
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {engagement.members.map((member) => (
+            <div
+              key={member.id}
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2"
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                  {getInitials(member.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">{member.name}</p>
+                <p className="text-[10px] text-muted-foreground capitalize">
+                  {member.role.replace("_", " ")}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -340,7 +315,15 @@ function EngagementDetailSkeleton() {
           </Card>
         ))}
       </div>
-      <Skeleton className="h-64 w-full" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <Skeleton className="h-12 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

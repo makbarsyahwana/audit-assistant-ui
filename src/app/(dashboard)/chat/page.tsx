@@ -1,17 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Trash2, Eye, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { ChatInput } from "@/components/chat/chat-input";
 import { EmptyChat } from "@/components/chat/empty-chat";
 import { useChat } from "@/hooks/useChat";
+import { cn } from "@/lib/utils";
+
+export type DetailLevel = "user" | "audit";
 
 export default function ChatPage() {
   const { messages, loading, sendMessage, clearMessages } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [detailLevel, setDetailLevel] = useState<DetailLevel>("user");
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -29,17 +38,58 @@ export default function ChatPage() {
             Ask questions about your audit documents with cited sources
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearMessages}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Clear
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Detail Level Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center rounded-lg border p-0.5">
+                <button
+                  onClick={() => setDetailLevel("user")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    detailLevel === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Eye className="h-3 w-3" />
+                  User
+                </button>
+                <button
+                  onClick={() => setDetailLevel("audit")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    detailLevel === "audit"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Audit
+                </button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">
+                {detailLevel === "user"
+                  ? "User view: confidence summary only"
+                  : "Audit view: full reasoning chain + retrieval details"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearMessages}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Messages Area */}
@@ -49,7 +99,7 @@ export default function ChatPage() {
         ) : (
           <div className="space-y-6 p-6">
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage key={message.id} message={message} detailLevel={detailLevel} />
             ))}
             {loading && (
               <div className="flex gap-3">

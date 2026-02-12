@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { ApprovalRequest, ApprovalStatus } from "@/types/admin";
+import { apiClient } from "@/lib/api";
 import { mockApprovalRequests } from "@/lib/mock-data-phase3";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useApprovals() {
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
@@ -13,8 +16,13 @@ export function useApprovals() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      setRequests(mockApprovalRequests);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        setRequests(mockApprovalRequests);
+      } else {
+        const data = await apiClient.get<ApprovalRequest[]>("/approvals");
+        setRequests(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch approvals");
     } finally {

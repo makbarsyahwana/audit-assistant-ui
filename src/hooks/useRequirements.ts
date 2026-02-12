@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Requirement, Control, RequirementControlMapping } from "@/types/requirement";
+import { apiClient } from "@/lib/api";
 import { mockRequirements, mockControls, mockMappings } from "@/lib/mock-data-phase2";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useRequirements(engagementId?: string) {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -15,16 +18,28 @@ export function useRequirements(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const reqs = engagementId
-        ? mockRequirements.filter((r) => r.engagementId === engagementId)
-        : mockRequirements;
-      const ctrls = engagementId
-        ? mockControls.filter((c) => c.engagementId === engagementId)
-        : mockControls;
-      setRequirements(reqs);
-      setControls(ctrls);
-      setMappings(mockMappings);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        const reqs = engagementId
+          ? mockRequirements.filter((r) => r.engagementId === engagementId)
+          : mockRequirements;
+        const ctrls = engagementId
+          ? mockControls.filter((c) => c.engagementId === engagementId)
+          : mockControls;
+        setRequirements(reqs);
+        setControls(ctrls);
+        setMappings(mockMappings);
+      } else {
+        const query = engagementId ? `?engagementId=${engagementId}` : "";
+        const [reqs, ctrls, maps] = await Promise.all([
+          apiClient.get<Requirement[]>(`/requirements${query}`),
+          apiClient.get<Control[]>(`/controls${query}`),
+          apiClient.get<RequirementControlMapping[]>(`/requirement-control-mappings${query}`),
+        ]);
+        setRequirements(reqs);
+        setControls(ctrls);
+        setMappings(maps);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch requirements");
     } finally {

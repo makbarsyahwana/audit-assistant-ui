@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { AuditTrailEntry, QueryLogEntry, AuditEventType } from "@/types/admin";
+import { apiClient } from "@/lib/api";
 import { mockAuditTrail, mockQueryLogs } from "@/lib/mock-data-phase3";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useAuditTrail() {
   const [entries, setEntries] = useState<AuditTrailEntry[]>([]);
@@ -14,9 +17,18 @@ export function useAuditTrail() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setEntries(mockAuditTrail);
-      setQueryLogs(mockQueryLogs);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        setEntries(mockAuditTrail);
+        setQueryLogs(mockQueryLogs);
+      } else {
+        const [trail, logs] = await Promise.all([
+          apiClient.get<AuditTrailEntry[]>("/audit-trail"),
+          apiClient.get<QueryLogEntry[]>("/audit-trail/query-logs"),
+        ]);
+        setEntries(trail);
+        setQueryLogs(logs);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch audit trail");
     } finally {

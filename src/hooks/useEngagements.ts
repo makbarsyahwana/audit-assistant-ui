@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Engagement } from "@/types/engagement";
+import { apiClient } from "@/lib/api";
 import { mockEngagements } from "@/lib/mock-data";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useEngagements() {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
@@ -13,9 +16,13 @@ export function useEngagements() {
     setLoading(true);
     setError(null);
     try {
-      // MVP: use mock data — swap to apiClient.get("/api/v1/engagements") when backend is ready
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setEngagements(mockEngagements);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        setEngagements(mockEngagements);
+      } else {
+        const data = await apiClient.get<Engagement[]>("/engagements");
+        setEngagements(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch engagements");
     } finally {

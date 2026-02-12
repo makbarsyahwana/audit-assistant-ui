@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Workpaper } from "@/types/workpaper";
+import { apiClient } from "@/lib/api";
 import { mockWorkpapers } from "@/lib/mock-data-phase2";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useWorkpapers(engagementId?: string) {
   const [workpapers, setWorkpapers] = useState<Workpaper[]>([]);
@@ -13,11 +16,17 @@ export function useWorkpapers(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      const filtered = engagementId
-        ? mockWorkpapers.filter((w) => w.engagementId === engagementId)
-        : mockWorkpapers;
-      setWorkpapers(filtered);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const filtered = engagementId
+          ? mockWorkpapers.filter((w) => w.engagementId === engagementId)
+          : mockWorkpapers;
+        setWorkpapers(filtered);
+      } else {
+        const query = engagementId ? `?engagementId=${engagementId}` : "";
+        const data = await apiClient.get<Workpaper[]>(`/workpapers${query}`);
+        setWorkpapers(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch workpapers");
     } finally {

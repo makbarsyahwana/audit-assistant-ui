@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { EvidencePack, EvidenceItem } from "@/types/evidence";
+import { apiClient } from "@/lib/api";
 import { mockEvidencePacks, mockEvidenceCandidates } from "@/lib/mock-data-phase2";
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useEvidencePacks(engagementId?: string) {
   const [packs, setPacks] = useState<EvidencePack[]>([]);
@@ -14,12 +17,19 @@ export function useEvidencePacks(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      const filtered = engagementId
-        ? mockEvidencePacks.filter((p) => p.engagementId === engagementId)
-        : mockEvidencePacks;
-      setPacks(filtered);
-      setCandidates(mockEvidenceCandidates);
+      if (USE_MOCK) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const filtered = engagementId
+          ? mockEvidencePacks.filter((p) => p.engagementId === engagementId)
+          : mockEvidencePacks;
+        setPacks(filtered);
+        setCandidates(mockEvidenceCandidates);
+      } else {
+        const query = engagementId ? `?engagementId=${engagementId}` : "";
+        const data = await apiClient.get<EvidencePack[]>(`/evidence-packs${query}`);
+        setPacks(data);
+        setCandidates([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch evidence packs");
     } finally {

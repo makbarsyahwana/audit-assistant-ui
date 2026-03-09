@@ -14,11 +14,11 @@ interface CitationCardProps {
 
 export function CitationCard({ citation, index }: CitationCardProps) {
   return (
-    <Card className="border-border/60 hover:border-border transition-colors">
+    <Card className="border-border hover:border-foreground/20 hover:shadow-sm transition-all">
       <CardContent className="p-3 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-foreground text-[10px] font-semibold text-background">
               {index + 1}
             </span>
             <div className="min-w-0">
@@ -34,17 +34,15 @@ export function CitationCard({ citation, index }: CitationCardProps) {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {citation.pageNumber && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              <span className="text-[10px] text-muted-foreground">
                 p.{citation.pageNumber}
-              </Badge>
+              </span>
             )}
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {citation.retrievalType}
-            </Badge>
+            <span className="text-[10px] text-muted-foreground capitalize">{citation.retrievalType}</span>
           </div>
         </div>
 
-        <blockquote className="border-l-2 border-muted-foreground/20 pl-3 text-xs text-muted-foreground leading-relaxed">
+        <blockquote className="border-l-2 border-border pl-3 text-xs text-muted-foreground leading-relaxed font-serif italic">
           {truncate(citation.snippet, 200)}
         </blockquote>
 

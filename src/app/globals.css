@@ -2,36 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
-    --radius: 0.5rem;
+    /* Harvey-style warm off-white background */
+    --background: 40 20% 97%;
+    --foreground: 0 0% 10%;
 
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
+    /* Cards: pure white */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* Primary = charcoal-black */
+    --primary: 0 0% 10%;
+    --primary-foreground: 40 20% 97%;
+
+    /* Secondary = warm light */
+    --secondary: 38 25% 93%;
+    --secondary-foreground: 0 0% 10%;
+
+    /* Muted */
+    --muted: 38 20% 93%;
+    --muted-foreground: 30 5% 52%;
+
+    /* Accent = warm amber bronze */
+    --accent: 33 48% 46%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 36 60% 93%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders: warm light gray */
+    --border: 36 16% 88%;
+    --input: 36 16% 88%;
+    --ring: 33 48% 46%;
+
+    /* Tighter radius — more refined */
+    --radius: 0.375rem;
+
+    /* Sidebar: LIGHT (Harvey key trait) */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-accent: 38 30% 92%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 36 16% 90%;
   }
 
   * {
@@ -40,10 +59,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+  h1, h2, h3 {
+    @apply font-serif;
   }
 }
 
@@ -54,8 +74,8 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -65,5 +85,17 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
     border-radius: 3px;
+  }
+
+  /* Harvey-style prose for AI responses */
+  .prose-harvey {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: hsl(var(--foreground));
+  }
+
+  .prose-harvey p + p {
+    margin-top: 0.875rem;
   }
 }

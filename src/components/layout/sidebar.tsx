@@ -1,24 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   MessageSquare,
+  FolderOpen,
+  BookOpen,
   Briefcase,
-  Shield,
   FileSearch,
   Users,
   Activity,
   Brain,
   CheckSquare,
-  ChevronLeft,
-  ChevronRight,
+  Plus,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ScrambleHover } from "@/components/fancy/scramble-hover";
-import { Separator } from "@/components/ui/separator";
+import { getInitials } from "@/lib/utils";
+import { useModeContext } from "@/contexts/ModeContext";
+import { ModeSelector } from "./mode-selector";
 
 interface NavItem {
   label: string;
@@ -26,13 +28,10 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-const mainNav: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Chat", href: "/chat", icon: MessageSquare },
-];
-
-const auditNav: NavItem[] = [
-  { label: "Engagements", href: "/engagements", icon: Briefcase },
+const platformNav: NavItem[] = [
+  { label: "Counsel", href: "/chat", icon: MessageSquare },
+  { label: "Repository", href: "/repository", icon: FolderOpen },
+  { label: "Playbooks", href: "/playbooks", icon: BookOpen },
 ];
 
 const adminNav: NavItem[] = [
@@ -45,7 +44,8 @@ const adminNav: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const { data: session } = useSession();
+  const { config } = useModeContext();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -61,71 +61,69 @@ export function Sidebar() {
         key={item.href}
         href={item.href}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
           active
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
-        {!collapsed && (
-          <ScrambleHover className="truncate" scrambleSpeed={30} maxIterations={8}>
-            {item.label}
-          </ScrambleHover>
-        )}
+        <span className="truncate">{item.label}</span>
       </Link>
     );
   };
 
-  const renderSection = (label: string, items: NavItem[]) => (
-    <div className="space-y-1">
-      {!collapsed && (
-        <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-          {label}
-        </p>
-      )}
-      {items.map(renderNavItem)}
-    </div>
-  );
-
   return (
-    <aside
-      className={cn(
-        "flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-60"
-      )}
-    >
-      <div className="flex h-14 items-center gap-2 px-4">
-        <Shield className="h-6 w-6 shrink-0 text-blue-400" />
-        {!collapsed && (
-          <span className="font-heading text-sm font-bold text-sidebar-foreground">
-            Audit Assistant
-          </span>
-        )}
+    <aside className="flex h-screen w-56 flex-col border-r border-sidebar-border bg-sidebar">
+      {/* User block */}
+      <div className="flex items-center gap-2.5 px-4 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground text-[11px] font-semibold text-background">
+          {session?.user?.name ? getInitials(session.user.name) : <Shield className="h-3.5 w-3.5" />}
+        </div>
+        <span className="truncate text-sm font-medium text-sidebar-foreground">
+          {session?.user?.name || "Audit Assistant"}
+        </span>
       </div>
 
-      <Separator className="bg-sidebar-border" />
+      {/* Mode selector */}
+      <div className="px-3 pb-2">
+        <ModeSelector />
+      </div>
 
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3 scrollbar-thin">
-        {renderSection("Main", mainNav)}
-        {renderSection("Audit", auditNav)}
-        {renderSection("Admin", adminNav)}
+      {/* New Chat button */}
+      <div className="px-3 pb-3">
+        <Link href="/chat">
+          <button className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border bg-white px-3 py-1.5 text-sm font-medium text-sidebar-foreground shadow-sm hover:bg-sidebar-accent/40 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            New Chat
+          </button>
+        </Link>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 scrollbar-thin space-y-0.5">
+        {platformNav.map(renderNavItem)}
+
+        <div className="my-3 border-t border-sidebar-border" />
+
+        {renderNavItem({
+          label: config.terminology.topLevelEntityPlural,
+          href: "/engagements",
+          icon: Briefcase,
+        })}
+        {renderNavItem({
+          label: "Dashboard",
+          href: "/",
+          icon: LayoutDashboard,
+        })}
+
+        <div className="my-3 border-t border-sidebar-border" />
+
+        <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/35">
+          Admin
+        </p>
+        {adminNav.map(renderNavItem)}
       </nav>
-
-      <Separator className="bg-sidebar-border" />
-
-      <div className="p-3">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-sidebar-foreground/50 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-      </div>
     </aside>
   );
 }

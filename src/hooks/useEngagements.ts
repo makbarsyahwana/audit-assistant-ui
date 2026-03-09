@@ -2,12 +2,27 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Engagement } from "@/types/engagement";
+import type { AppMode } from "@/types/mode";
 import { apiClient } from "@/lib/api";
 import { mockEngagements } from "@/lib/mock-data";
+import { mockMatters } from "@/lib/mock-data-legal";
+import { mockPrograms } from "@/lib/mock-data-compliance";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
-export function useEngagements() {
+function getMockDataForMode(mode: AppMode): Engagement[] {
+  switch (mode) {
+    case "legal":
+      return mockMatters;
+    case "compliance":
+      return mockPrograms;
+    case "audit":
+    default:
+      return mockEngagements;
+  }
+}
+
+export function useEngagements(mode: AppMode = "audit") {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +33,7 @@ export function useEngagements() {
     try {
       if (USE_MOCK) {
         await new Promise((resolve) => setTimeout(resolve, 300));
-        setEngagements(mockEngagements);
+        setEngagements(getMockDataForMode(mode));
       } else {
         const data = await apiClient.get<Engagement[]>("/engagements");
         setEngagements(data);
@@ -28,7 +43,7 @@ export function useEngagements() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     fetchEngagements();

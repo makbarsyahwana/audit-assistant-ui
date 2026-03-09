@@ -2,16 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Trash2, Eye, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { ChatInput } from "@/components/chat/chat-input";
 import { EmptyChat } from "@/components/chat/empty-chat";
+import { DeepAnalysisProgress } from "@/components/chat/deep-analysis-progress";
 import { useChat } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +15,12 @@ export default function ChatPage() {
   const { messages, loading, sendMessage, clearMessages } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [detailLevel, setDetailLevel] = useState<DetailLevel>("user");
+  const [isDeepAnalysis, setIsDeepAnalysis] = useState(false);
+
+  const handleSendMessage = (message: string, options?: { forceDeepAnalysis?: boolean }) => {
+    setIsDeepAnalysis(options?.forceDeepAnalysis || false);
+    sendMessage(message, options);
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -29,93 +29,65 @@ export default function ChatPage() {
   }, [messages]);
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col -m-6">
-      {/* Chat Header */}
-      <div className="flex items-center justify-between border-b px-6 py-3">
-        <div>
-          <h1 className="text-lg font-semibold">AI Chat</h1>
-          <p className="text-xs text-muted-foreground">
-            Ask questions about your audit documents with cited sources
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Detail Level Toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center rounded-lg border p-0.5">
-                <button
-                  onClick={() => setDetailLevel("user")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                    detailLevel === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Eye className="h-3 w-3" />
-                  User
-                </button>
-                <button
-                  onClick={() => setDetailLevel("audit")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                    detailLevel === "audit"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <ShieldCheck className="h-3 w-3" />
-                  Audit
-                </button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">
-                {detailLevel === "user"
-                  ? "User view: confidence summary only"
-                  : "Audit view: full reasoning chain + retrieval details"}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearMessages}
-              className="text-muted-foreground hover:text-destructive"
+    <div className="flex h-full flex-col bg-background">
+      {/* Slim Harvey-style toolbar — only visible when there are messages */}
+      {messages.length > 0 && (
+        <div className="flex items-center justify-between border-b border-border px-8 py-2">
+          <div className="flex items-center rounded-md border border-border p-0.5 gap-0.5">
+            <button
+              onClick={() => setDetailLevel("user")}
+              className={cn(
+                "flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                detailLevel === "user"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              Clear
-            </Button>
-          )}
+              <Eye className="h-3 w-3" />
+              User
+            </button>
+            <button
+              onClick={() => setDetailLevel("audit")}
+              className={cn(
+                "flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                detailLevel === "audit"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <ShieldCheck className="h-3 w-3" />
+              Audit
+            </button>
+          </div>
+          <button
+            onClick={clearMessages}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Trash2 className="h-3 w-3" />
+            Clear
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Messages Area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin">
         {messages.length === 0 ? (
-          <EmptyChat onSuggestionClick={sendMessage} />
+          <EmptyChat onSuggestionClick={(msg) => handleSendMessage(msg)} />
         ) : (
-          <div className="space-y-6 p-6">
+          <div className="mx-auto max-w-3xl space-y-8 px-8 py-8">
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} detailLevel={detailLevel} />
             ))}
-            {loading && (
-              <div className="flex gap-3">
-                <div className="h-8 w-8 shrink-0 rounded-full bg-blue-600 flex items-center justify-center">
-                  <div className="flex gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse [animation-delay:0.2s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse [animation-delay:0.4s]" />
-                  </div>
-                </div>
-                <div className="rounded-xl rounded-tl-sm bg-muted px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse" />
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.2s]" />
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0.4s]" />
-                  </div>
+            {loading && isDeepAnalysis && (
+              <DeepAnalysisProgress isActive={true} />
+            )}
+            {loading && !isDeepAnalysis && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Working…</p>
+                <div className="flex gap-1 pl-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:0.15s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:0.3s]" />
                 </div>
               </div>
             )}
@@ -123,10 +95,10 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t bg-background p-4">
+      {/* Harvey-style floating input */}
+      <div className="px-8 pb-6 pt-2">
         <div className="mx-auto max-w-3xl">
-          <ChatInput onSend={sendMessage} loading={loading} />
+          <ChatInput onSend={handleSendMessage} loading={loading} />
         </div>
       </div>
     </div>

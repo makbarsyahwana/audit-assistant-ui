@@ -24,7 +24,7 @@ export function useChat(engagementId?: string) {
   }, []);
 
   const sendMessage = useCallback(
-    async (query: string) => {
+    async (query: string, options?: { forceDeepAnalysis?: boolean }) => {
       if (!query.trim()) return;
 
       const userMessage: ChatMessage = {
@@ -40,7 +40,11 @@ export function useChat(engagementId?: string) {
 
       try {
         if (USE_MOCK) {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          // Simulate longer delay for deep analysis
+          const delay = options?.forceDeepAnalysis ? 3000 : 1500;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          
+          const isComplex = options?.forceDeepAnalysis || query.length > 100;
           const assistantMessage: ChatMessage = {
             id: `msg_${Date.now() + 1}`,
             role: "assistant",
@@ -48,11 +52,32 @@ export function useChat(engagementId?: string) {
             citations: mockCitations.slice(0, 2),
             confidence: 0.78 + Math.random() * 0.17,
             confidenceLevel: "high",
-            explanation:
-              "Retrieved relevant documents via hybrid search combining vector similarity and keyword matching.",
+            explanation: isComplex
+              ? "Used agentic loop with planner and critic for deep multi-document analysis."
+              : "Retrieved relevant documents via hybrid search combining vector similarity and keyword matching.",
             retrievalMode: "hybrid",
-            latencyMs: 800 + Math.floor(Math.random() * 1200),
+            latencyMs: isComplex ? 2500 + Math.floor(Math.random() * 1500) : 800 + Math.floor(Math.random() * 1200),
             timestamp: new Date().toISOString(),
+            complexity: isComplex ? "complex" : "simple",
+            agenticTrace: isComplex ? {
+              complexity: "complex",
+              agenticIterations: 3,
+              planningSteps: [
+                { action: "retrieve", reasoning: "Need to gather relevant documents first", query: query, estimatedCompleteness: 0.3, timestamp: new Date().toISOString() },
+                { action: "rlm_deep", reasoning: "Query requires cross-document analysis", query: "Analyze patterns across documents", estimatedCompleteness: 0.7, timestamp: new Date().toISOString() },
+                { action: "answer", reasoning: "Sufficient evidence gathered", query: query, estimatedCompleteness: 1.0, timestamp: new Date().toISOString() },
+              ],
+              criticEvaluations: [
+                { sufficient: false, groundednessScore: 0.6, completenessScore: 0.4, reason: "Need more evidence", nextAction: "rlm_deep" },
+                { sufficient: true, groundednessScore: 0.92, completenessScore: 0.88, reason: "Good coverage achieved", nextAction: "answer" },
+              ],
+              rlmIterations: 4,
+              rlmSubCalls: 2,
+              rlmTrace: [
+                { iteration: 1, code: "results = rag_retrieve(query, mode='hybrid', top_k=10)", stdoutMeta: "Retrieved 10 chunks" },
+                { iteration: 2, code: "analysis = sub_rlm('Analyze compliance gaps')", stdoutMeta: "Sub-RLM completed" },
+              ],
+            } : undefined,
           };
           setMessages((prev) => [...prev, assistantMessage]);
           return;
@@ -66,10 +91,20 @@ export function useChat(engagementId?: string) {
           explanation: string;
           runId: string;
           threadId: string;
+          complexity?: "simple" | "complex";
+          agenticTrace?: {
+            agenticIterations: number;
+            planningSteps: Array<{ action: string; reasoning: string; query: string; estimatedCompleteness: number; timestamp: string }>;
+            criticEvaluations: Array<{ sufficient: boolean; groundednessScore: number; completenessScore: number; reason: string; nextAction: string }>;
+            rlmIterations: number;
+            rlmSubCalls: number;
+            rlmTrace: Array<{ iteration: number; code: string; stdoutMeta: string }>;
+          };
         }>("/chat/query", {
           query,
           engagementId,
           threadId: threadIdRef.current,
+          forceDeepAnalysis: options?.forceDeepAnalysis,
         });
 
         threadIdRef.current = response.threadId;
@@ -95,6 +130,11 @@ export function useChat(engagementId?: string) {
           confidenceLevel,
           explanation: response.explanation,
           timestamp: new Date().toISOString(),
+          complexity: response.complexity,
+          agenticTrace: response.agenticTrace ? {
+            complexity: response.complexity || "complex",
+            ...response.agenticTrace,
+          } : undefined,
         };
 
         setMessages((prev) => [...prev, assistantMessage]);

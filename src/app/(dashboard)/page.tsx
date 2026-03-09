@@ -25,8 +25,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ConfidenceIndicator } from "@/components/ui/confidence-indicator";
 import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
+import { useModeContext } from "@/contexts/ModeContext";
 import { useEngagements } from "@/hooks/useEngagements";
 import { mockDashboardStats, mockRecentQueries } from "@/lib/mock-data";
+import { mockLegalDashboardStats } from "@/lib/mock-data-legal";
+import { mockComplianceDashboardStats } from "@/lib/mock-data-compliance";
 import { formatDateTime, getInitials, truncate } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
@@ -40,35 +43,39 @@ const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" 
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { engagements, loading } = useEngagements();
+  const { mode, config } = useModeContext();
+  const { engagements, loading } = useEngagements(mode);
 
-  const stats = mockDashboardStats;
+  const stats =
+    mode === "legal"
+      ? mockLegalDashboardStats
+      : mode === "compliance"
+        ? mockComplianceDashboardStats
+        : mockDashboardStats;
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          <VerticalCutReveal splitBy="words" staggerDuration={0.05}>
-            {`Welcome back, ${firstName}`}
-          </VerticalCutReveal>
+        <h1 className="font-serif text-3xl font-normal text-foreground">
+          Welcome back, {firstName}
         </h1>
-        <p className="text-muted-foreground mt-1">
-          Here&apos;s an overview of your audit engagements and recent activity.
+        <p className="text-sm text-muted-foreground mt-1">
+          Here&apos;s an overview of your {config.terminology.topLevelEntityPlural.toLowerCase()} and recent activity.
         </p>
       </div>
 
       {/* KPI Row */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total Engagements"
+          title={`Total ${config.terminology.topLevelEntityPlural}`}
           value={stats.totalEngagements}
           icon={Briefcase}
-          description="All engagements"
+          description={`All ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
         />
         <KpiCard
-          title="Active Engagements"
+          title={`Active ${config.terminology.topLevelEntityPlural}`}
           value={stats.activeEngagements}
           icon={TrendingUp}
           description="Currently in progress"
@@ -77,7 +84,7 @@ export default function DashboardPage() {
           title="Documents Indexed"
           value={stats.documentsIndexed}
           icon={FileText}
-          description="Across all engagements"
+          description={`Across all ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
         />
         <KpiCard
           title="Queries This Week"
@@ -91,7 +98,7 @@ export default function DashboardPage() {
         {/* Active Engagements Table */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-base font-semibold">Active Engagements</CardTitle>
+            <CardTitle className="text-base font-semibold">Active {config.terminology.topLevelEntityPlural}</CardTitle>
             <Link href="/engagements">
               <Button variant="ghost" size="sm" className="text-xs">
                 View all <ArrowRight className="ml-1 h-3 w-3" />
@@ -141,7 +148,7 @@ export default function DashboardPage() {
                         <div className="flex -space-x-2">
                           {engagement.members.slice(0, 3).map((member) => (
                             <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
-                              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                              <AvatarFallback className="text-[10px] bg-foreground text-background">
                                 {getInitials(member.name)}
                               </AvatarFallback>
                             </Avatar>
@@ -195,7 +202,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="flex gap-3">
         <Link href="/chat">
-          <Button>
+          <Button className="bg-foreground text-background hover:bg-foreground/85">
             <MessageSquare className="mr-2 h-4 w-4" />
             New Chat
           </Button>
@@ -203,7 +210,7 @@ export default function DashboardPage() {
         <Link href="/engagements">
           <Button variant="outline">
             <Briefcase className="mr-2 h-4 w-4" />
-            Browse Engagements
+            Browse {config.terminology.topLevelEntityPlural}
           </Button>
         </Link>
       </div>

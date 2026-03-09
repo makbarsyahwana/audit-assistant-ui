@@ -21,6 +21,41 @@ export interface Citation {
 
 export type MessageRole = "user" | "assistant" | "system";
 
+// Agentic loop types
+export type QueryComplexity = "simple" | "complex";
+
+export interface PlanningStep {
+  action: string;
+  reasoning: string;
+  query: string;
+  estimatedCompleteness: number;
+  timestamp: string;
+}
+
+export interface CriticEvaluation {
+  sufficient: boolean;
+  groundednessScore: number;
+  completenessScore: number;
+  reason: string;
+  nextAction: string;
+}
+
+export interface RlmIteration {
+  iteration: number;
+  code: string;
+  stdoutMeta: string;
+}
+
+export interface AgenticTrace {
+  complexity: QueryComplexity;
+  agenticIterations: number;
+  planningSteps: PlanningStep[];
+  criticEvaluations: CriticEvaluation[];
+  rlmIterations: number;
+  rlmSubCalls: number;
+  rlmTrace: RlmIteration[];
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -32,6 +67,9 @@ export interface ChatMessage {
   retrievalMode?: RetrievalMode;
   latencyMs?: number;
   timestamp: string;
+  // Agentic RAG fields
+  complexity?: QueryComplexity;
+  agenticTrace?: AgenticTrace;
 }
 
 export interface ChatSession {
@@ -52,6 +90,7 @@ export interface QueryRequest {
   periodEnd?: string;
   docType?: string;
   retrievalMode?: RetrievalMode;
+  forceDeepAnalysis?: boolean; // Force complex path even for simple queries
 }
 
 export interface QueryResponse {

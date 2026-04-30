@@ -3,9 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ServiceHealth, SystemMetric } from "@/types/admin";
 import { apiClient } from "@/lib/api";
-import { mockServiceHealth, mockSystemMetrics } from "@/lib/mock-data-phase3";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export function useSystemHealth() {
   const [services, setServices] = useState<ServiceHealth[]>([]);
@@ -17,15 +14,9 @@ export function useSystemHealth() {
     setLoading(true);
     setError(null);
     try {
-      if (USE_MOCK) {
-        await new Promise((resolve) => setTimeout(resolve, 400));
-        setServices(mockServiceHealth);
-        setMetrics(mockSystemMetrics);
-      } else {
-        const data = await apiClient.get<{ services: ServiceHealth[]; metrics: SystemMetric[] }>("/health/status");
-        setServices(data.services);
-        setMetrics(data.metrics);
-      }
+      const data = await apiClient.get<{ services: ServiceHealth[]; metrics: SystemMetric[] }>("/health/status");
+      setServices(data.services);
+      setMetrics(data.metrics);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch system health");
     } finally {

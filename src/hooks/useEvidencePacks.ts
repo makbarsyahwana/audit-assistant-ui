@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { EvidencePack, EvidenceItem } from "@/types/evidence";
+import type { EvidencePack, EvidencePackItem } from "@/types/evidence";
 import { apiClient } from "@/lib/api";
-import { mockEvidencePacks, mockEvidenceCandidates } from "@/lib/mock-data-phase2";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+import { normalizeRecords } from "@/lib/normalize";
 
 export function useEvidencePacks(engagementId?: string) {
   const [packs, setPacks] = useState<EvidencePack[]>([]);
-  const [candidates, setCandidates] = useState<EvidenceItem[]>([]);
+  const [candidates, setCandidates] = useState<EvidencePackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,19 +15,10 @@ export function useEvidencePacks(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      if (USE_MOCK) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
-        const filtered = engagementId
-          ? mockEvidencePacks.filter((p) => p.engagementId === engagementId)
-          : mockEvidencePacks;
-        setPacks(filtered);
-        setCandidates(mockEvidenceCandidates);
-      } else {
-        const query = engagementId ? `?engagementId=${engagementId}` : "";
-        const data = await apiClient.get<EvidencePack[]>(`/evidence-packs${query}`);
-        setPacks(data);
-        setCandidates([]);
-      }
+      const query = engagementId ? `?engagementId=${engagementId}` : "";
+      const data = await apiClient.get<EvidencePack[]>(`/evidence-packs${query}`);
+      setPacks(normalizeRecords(data, ["status"]));
+      setCandidates([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch evidence packs");
     } finally {
@@ -42,10 +31,10 @@ export function useEvidencePacks(engagementId?: string) {
   }, [fetchData]);
 
   const addItemToPack = useCallback(
-    (packId: string, item: EvidenceItem) => {
+    (packId: string, item: EvidencePackItem) => {
       setPacks((prev) =>
         prev.map((p) =>
-          p.id === packId ? { ...p, items: [...p.items, item], updatedAt: new Date().toISOString() } : p
+          p.id === packId ? { ...p, items: [...(p.items ?? []), item], updatedAt: new Date().toISOString() } : p
         )
       );
     },
@@ -57,7 +46,7 @@ export function useEvidencePacks(engagementId?: string) {
       setPacks((prev) =>
         prev.map((p) =>
           p.id === packId
-            ? { ...p, items: p.items.filter((i) => i.id !== itemId), updatedAt: new Date().toISOString() }
+            ? { ...p, items: (p.items ?? []).filter((i) => i.id !== itemId), updatedAt: new Date().toISOString() }
             : p
         )
       );

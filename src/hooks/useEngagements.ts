@@ -4,23 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Engagement } from "@/types/engagement";
 import type { AppMode } from "@/types/mode";
 import { apiClient } from "@/lib/api";
-import { mockEngagements } from "@/lib/mock-data";
-import { mockMatters } from "@/lib/mock-data-legal";
-import { mockPrograms } from "@/lib/mock-data-compliance";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-
-function getMockDataForMode(mode: AppMode): Engagement[] {
-  switch (mode) {
-    case "legal":
-      return mockMatters;
-    case "compliance":
-      return mockPrograms;
-    case "audit":
-    default:
-      return mockEngagements;
-  }
-}
+import { normalizeRecords } from "@/lib/normalize";
 
 export function useEngagements(mode: AppMode = "audit") {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
@@ -31,13 +15,8 @@ export function useEngagements(mode: AppMode = "audit") {
     setLoading(true);
     setError(null);
     try {
-      if (USE_MOCK) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        setEngagements(getMockDataForMode(mode));
-      } else {
-        const data = await apiClient.get<Engagement[]>("/engagements");
-        setEngagements(data);
-      }
+      const data = await apiClient.get<Engagement[]>("/engagements");
+      setEngagements(normalizeRecords(data, ["status", "mode"]));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch engagements");
     } finally {

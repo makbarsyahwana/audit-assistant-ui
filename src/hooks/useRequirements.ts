@@ -3,9 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Requirement, Control, RequirementControlMapping } from "@/types/requirement";
 import { apiClient } from "@/lib/api";
-import { mockRequirements, mockControls, mockMappings } from "@/lib/mock-data-phase2";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+import { normalizeRecords } from "@/lib/normalize";
 
 export function useRequirements(engagementId?: string) {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -18,28 +16,15 @@ export function useRequirements(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      if (USE_MOCK) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        const reqs = engagementId
-          ? mockRequirements.filter((r) => r.engagementId === engagementId)
-          : mockRequirements;
-        const ctrls = engagementId
-          ? mockControls.filter((c) => c.engagementId === engagementId)
-          : mockControls;
-        setRequirements(reqs);
-        setControls(ctrls);
-        setMappings(mockMappings);
-      } else {
-        const query = engagementId ? `?engagementId=${engagementId}` : "";
-        const [reqs, ctrls, maps] = await Promise.all([
-          apiClient.get<Requirement[]>(`/requirements${query}`),
-          apiClient.get<Control[]>(`/controls${query}`),
-          apiClient.get<RequirementControlMapping[]>(`/requirement-control-mappings${query}`),
-        ]);
-        setRequirements(reqs);
-        setControls(ctrls);
-        setMappings(maps);
-      }
+      const query = engagementId ? `?engagementId=${engagementId}` : "";
+      const [reqs, ctrls, maps] = await Promise.all([
+        apiClient.get<Requirement[]>(`/requirements${query}`),
+        apiClient.get<Control[]>(`/controls${query}`),
+        apiClient.get<RequirementControlMapping[]>(`/requirement-control-mappings${query}`),
+      ]);
+      setRequirements(normalizeRecords(reqs, ["priority"]));
+      setControls(normalizeRecords(ctrls, ["controlType", "status"]));
+      setMappings(normalizeRecords(maps, ["coverageLevel"]));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch requirements");
     } finally {
@@ -53,13 +38,13 @@ export function useRequirements(engagementId?: string) {
 
   const getCoveragePercent = useCallback(() => {
     if (requirements.length === 0) return 0;
-    const mapped = mappings.filter((m) => m.status === "mapped").length;
+    const mapped = mappings.filter((m) => m.coverageLevel === "full" || m.coverageLevel === "partial").length;
     const total = requirements.length;
     return Math.round((mapped / total) * 100);
   }, [requirements, mappings]);
 
   const getGaps = useCallback(() => {
-    return mappings.filter((m) => m.status === "gap");
+    return mappings.filter((m) => m.coverageLevel === "none");
   }, [mappings]);
 
   return {

@@ -1,5 +1,5 @@
 export type FindingSeverity = "critical" | "high" | "medium" | "low" | "informational";
-export type FindingStatus = "draft" | "in_review" | "accepted" | "remediated" | "closed";
+export type FindingStatus = "draft" | "in_review" | "open" | "remediation" | "closed";
 
 export interface Finding {
   id: string;
@@ -7,17 +7,14 @@ export interface Finding {
   title: string;
   severity: FindingSeverity;
   status: FindingStatus;
-  controlId?: string;
-  controlTitle?: string;
-  criteria: string;
-  condition: string;
-  cause: string;
-  effect: string;
-  recommendation: string;
+  criteria?: string;
+  condition?: string;
+  cause?: string;
+  effect?: string;
+  recommendation?: string;
   managementResponse?: string;
-  targetDate?: string;
-  citationIds: string[];
-  createdBy: string;
+  citations?: unknown;
+  createdById?: string;
   createdAt: string;
   updatedAt: string;
 }

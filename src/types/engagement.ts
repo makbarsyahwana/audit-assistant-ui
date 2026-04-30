@@ -1,17 +1,23 @@
 export type EngagementStatus =
   | "planning"
   | "active"
-  | "review"
   | "closed"
   | "archived";
+
+export interface EngagementMemberUser {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+}
 
 export interface EngagementMember {
   id: string;
   userId: string;
-  name: string;
-  email: string;
+  engagementId: string;
   role: string;
-  avatar?: string;
+  joinedAt: string;
+  user: EngagementMemberUser;
 }
 
 export interface EngagementStats {
@@ -25,15 +31,18 @@ export interface Engagement {
   id: string;
   name: string;
   description?: string;
+  mode?: "audit" | "legal" | "compliance";
   status: EngagementStatus;
-  entityName: string;
-  entityId: string;
-  periodStart: string;
-  periodEnd: string;
+  entityName?: string;
+  entityId?: string;
+  periodStart?: string;
+  periodEnd?: string;
   framework?: string;
-  members: EngagementMember[];
-  stats: EngagementStats;
+  members?: EngagementMember[];
+  stats?: EngagementStats;
   createdAt: string;
   updatedAt: string;
-  lastActivityAt: string;
+  closedAt?: string;
+  archivedAt?: string;
+  lastActivityAt?: string;
 }

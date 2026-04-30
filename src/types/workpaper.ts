@@ -1,24 +1,20 @@
-export type WorkpaperStatus = "draft" | "in_review" | "reviewed" | "approved" | "final";
-export type WorkpaperType = "standard" | "memo" | "walkthrough" | "test_of_controls";
-
-export interface WorkpaperSection {
-  id: string;
-  label: string;
-  content: string;
-  citations?: string[];
-}
+export type WorkpaperStatus = "draft" | "in_review" | "approved" | "final";
+export type WorkpaperTemplate = "general" | "criteria_condition" | "financial_memo" | "walkthrough";
 
 export interface Workpaper {
   id: string;
   engagementId: string;
   title: string;
-  type: WorkpaperType;
+  templateType?: WorkpaperTemplate;
   status: WorkpaperStatus;
-  controlId?: string;
-  controlTitle?: string;
-  preparedBy: string;
-  reviewedBy?: string;
-  sections: WorkpaperSection[];
+  criteria?: string;
+  condition?: string;
+  testing?: string;
+  result?: string;
+  conclusion?: string;
+  draftContent?: string;
+  citations?: unknown;
+  createdById?: string;
   createdAt: string;
   updatedAt: string;
 }

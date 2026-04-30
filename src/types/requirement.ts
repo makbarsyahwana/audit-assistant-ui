@@ -1,46 +1,44 @@
-export type RequirementStatus = "not_started" | "in_progress" | "tested" | "completed";
+export type RequirementPriority = "high" | "medium" | "low";
 
 export interface Requirement {
   id: string;
   engagementId: string;
   clauseId: string;
   title: string;
-  description: string;
+  description?: string;
   framework: string;
   category?: string;
-  status: RequirementStatus;
-  controlIds: string[];
-  evidenceCount: number;
+  priority?: RequirementPriority;
+  controlMappings?: RequirementControlMapping[];
   createdAt: string;
   updatedAt: string;
 }
 
-export type ControlEffectiveness = "effective" | "partially_effective" | "ineffective" | "not_tested";
+export type ControlType = "manual" | "automated" | "it_dependent";
+export type ControlStatus = "not_tested" | "effective" | "ineffective" | "not_applicable";
 
 export interface Control {
   id: string;
   controlId: string;
   engagementId: string;
   title: string;
-  description: string;
-  category: string;
+  description?: string;
+  controlType?: ControlType;
+  status?: ControlStatus;
   owner?: string;
   frequency?: string;
-  effectiveness: ControlEffectiveness;
-  testingStatus: "pending" | "in_progress" | "completed";
-  requirementIds: string[];
-  evidenceIds: string[];
+  requirementMappings?: RequirementControlMapping[];
   createdAt: string;
   updatedAt: string;
 }
 
-export type MappingStatus = "mapped" | "partial" | "gap";
+export type CoverageLevel = "full" | "partial" | "none";
 
 export interface RequirementControlMapping {
   id: string;
   requirementId: string;
   controlId: string;
-  status: MappingStatus;
+  coverageLevel?: CoverageLevel;
   notes?: string;
-  lastVerified?: string;
+  createdAt?: string;
 }

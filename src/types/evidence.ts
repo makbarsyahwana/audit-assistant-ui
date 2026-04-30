@@ -1,16 +1,13 @@
 export type EvidencePackStatus = "draft" | "in_review" | "approved" | "exported";
 
-export interface EvidenceItem {
+export interface EvidencePackItem {
   id: string;
+  evidencePackId: string;
   documentId: string;
-  documentTitle: string;
-  docType: string;
   controlId?: string;
-  relevanceScore: number;
-  snippet?: string;
-  pageNumber?: number;
-  addedAt: string;
-  addedBy: string;
+  rationale?: string;
+  sortOrder?: number;
+  createdAt?: string;
 }
 
 export interface EvidencePack {
@@ -18,11 +15,11 @@ export interface EvidencePack {
   engagementId: string;
   name: string;
   description?: string;
-  controlId?: string;
-  controlTitle?: string;
   status: EvidencePackStatus;
-  items: EvidenceItem[];
-  createdBy: string;
+  items?: EvidencePackItem[];
+  createdById?: string;
   createdAt: string;
   updatedAt: string;
 }
+
+export type { EvidencePackItem as EvidenceItem };

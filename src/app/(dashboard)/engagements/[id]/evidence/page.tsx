@@ -63,10 +63,10 @@ export default function EvidencePage() {
 
   const filteredCandidates = candidates.filter((c) => {
     const matchesSearch =
-      c.documentTitle.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+      c.documentId.toLowerCase().includes(candidateSearch.toLowerCase()) ||
       (c.controlId?.toLowerCase().includes(candidateSearch.toLowerCase()) ?? false);
     const notAlreadyAdded = selectedPack
-      ? !selectedPack.items.some((i) => i.documentId === c.documentId && i.pageNumber === c.pageNumber)
+      ? !(selectedPack.items ?? []).some((i) => i.documentId === c.documentId)
       : true;
     return matchesSearch && notAlreadyAdded;
   });
@@ -167,7 +167,7 @@ export default function EvidencePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <BasicNumberTicker value={packs.reduce((sum, p) => sum + p.items.length, 0)} delay={0.2} />
+              <BasicNumberTicker value={packs.reduce((sum, p) => sum + (p.items ?? []).length, 0)} delay={0.2} />
             </div>
           </CardContent>
         </Card>
@@ -199,13 +199,8 @@ export default function EvidencePage() {
                       {statusCfg.label}
                     </Badge>
                   </div>
-                  {pack.controlId && (
-                    <p className="text-xs text-muted-foreground">
-                      Control: {pack.controlId} — {pack.controlTitle}
-                    </p>
-                  )}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{pack.items.length} item{pack.items.length !== 1 ? "s" : ""}</span>
+                    <span>{(pack.items ?? []).length} item{(pack.items ?? []).length !== 1 ? "s" : ""}</span>
                     <span>{formatDate(pack.updatedAt)}</span>
                   </div>
                 </CardContent>
@@ -237,7 +232,7 @@ export default function EvidencePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {selectedPack.items.length === 0 ? (
+                  {(selectedPack.items ?? []).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Package className="h-10 w-10 text-muted-foreground/40 mb-3" />
                       <p className="text-sm font-medium">No evidence items yet</p>
@@ -247,7 +242,7 @@ export default function EvidencePage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {selectedPack.items.map((item, idx) => (
+                      {(selectedPack.items ?? []).map((item) => (
                         <div
                           key={item.id}
                           className="flex items-start gap-3 rounded-lg border p-3 group hover:bg-muted/50 transition-colors"
@@ -257,23 +252,19 @@ export default function EvidencePage() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <p className="text-sm font-medium truncate">
-                                {item.documentTitle}
+                                {item.documentId}
                               </p>
-                              {item.pageNumber && (
+                              {item.controlId && (
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                  p.{item.pageNumber}
+                                  {item.controlId}
                                 </Badge>
                               )}
                             </div>
-                            {item.snippet && (
+                            {item.rationale && (
                               <p className="text-xs text-muted-foreground line-clamp-2">
-                                {item.snippet}
+                                {item.rationale}
                               </p>
                             )}
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                              <ConfidenceIndicator value={item.relevanceScore} size="sm" />
-                              <span>Added by {item.addedBy}</span>
-                            </div>
                           </div>
                           <Button
                             variant="ghost"
@@ -326,25 +317,19 @@ export default function EvidencePage() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <p className="text-sm font-medium truncate">
-                                {candidate.documentTitle}
+                                {candidate.documentId}
                               </p>
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize shrink-0">
-                                {candidate.docType}
-                              </Badge>
-                            </div>
-                            {candidate.snippet && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {candidate.snippet}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-3">
-                              <ConfidenceIndicator value={candidate.relevanceScore} size="sm" />
                               {candidate.controlId && (
-                                <span className="text-[10px] text-muted-foreground">
-                                  Control: {candidate.controlId}
-                                </span>
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize shrink-0">
+                                  {candidate.controlId}
+                                </Badge>
                               )}
                             </div>
+                            {candidate.rationale && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {candidate.rationale}
+                              </p>
+                            )}
                           </div>
                           <Button
                             variant="outline"

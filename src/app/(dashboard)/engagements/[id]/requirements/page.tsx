@@ -29,26 +29,19 @@ import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { useRequirements } from "@/hooks/useRequirements";
 import { cn } from "@/lib/utils";
-import type { MappingStatus, RequirementStatus, ControlEffectiveness } from "@/types/requirement";
+import type { CoverageLevel, ControlStatus } from "@/types/requirement";
 
-const reqStatusConfig: Record<RequirementStatus, { label: string; icon: React.ElementType; color: string }> = {
-  completed: { label: "Completed", icon: CheckCircle2, color: "text-emerald-600" },
-  tested: { label: "Tested", icon: CheckCircle2, color: "text-blue-600" },
-  in_progress: { label: "In Progress", icon: Circle, color: "text-amber-600" },
-  not_started: { label: "Not Started", icon: Circle, color: "text-muted-foreground" },
-};
-
-const mappingStatusConfig: Record<MappingStatus, { label: string; bg: string; border: string }> = {
-  mapped: { label: "Mapped", bg: "bg-emerald-500", border: "border-emerald-200" },
+const coverageConfig: Record<CoverageLevel, { label: string; bg: string; border: string }> = {
+  full: { label: "Full", bg: "bg-emerald-500", border: "border-emerald-200" },
   partial: { label: "Partial", bg: "bg-amber-500", border: "border-amber-200" },
-  gap: { label: "Gap", bg: "bg-rose-500", border: "border-rose-200" },
+  none: { label: "Gap", bg: "bg-rose-500", border: "border-rose-200" },
 };
 
-const effectivenessConfig: Record<ControlEffectiveness, { label: string; color: string }> = {
+const controlStatusConfig: Record<ControlStatus, { label: string; color: string }> = {
   effective: { label: "Effective", color: "text-emerald-600" },
-  partially_effective: { label: "Partial", color: "text-amber-600" },
   ineffective: { label: "Ineffective", color: "text-rose-600" },
   not_tested: { label: "Not Tested", color: "text-muted-foreground" },
+  not_applicable: { label: "N/A", color: "text-slate-500" },
 };
 
 export default function RequirementsPage() {
@@ -58,7 +51,6 @@ export default function RequirementsPage() {
     useRequirements(engagementId);
 
   const [searchReq, setSearchReq] = useState("");
-  const [statusFilter, setStatusFilter] = useState<RequirementStatus | "all">("all");
 
   const coveragePercent = getCoveragePercent();
   const gaps = getGaps();
@@ -67,15 +59,14 @@ export default function RequirementsPage() {
     const matchesSearch =
       r.clauseId.toLowerCase().includes(searchReq.toLowerCase()) ||
       r.title.toLowerCase().includes(searchReq.toLowerCase());
-    const matchesStatus = statusFilter === "all" || r.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
-  const getMappingStatus = (reqId: string, ctrlId: string): MappingStatus | null => {
+  const getMappingCoverage = (reqId: string, ctrlId: string): CoverageLevel | null => {
     const mapping = mappings.find(
       (m) => m.requirementId === reqId && m.controlId === ctrlId
     );
-    return mapping?.status ?? null;
+    return mapping?.coverageLevel ?? null;
   };
 
   if (loading) {
@@ -139,7 +130,7 @@ export default function RequirementsPage() {
               <BasicNumberTicker value={requirements.length} delay={0.2} />
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {requirements.filter((r) => r.status === "completed").length} completed
+              across {controls.length} controls
             </p>
           </CardContent>
         </Card>
@@ -170,22 +161,6 @@ export default function RequirementsPage() {
             className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </div>
-        <div className="flex gap-1.5">
-          {(["all", "not_started", "in_progress", "tested", "completed"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                statusFilter === s
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              {s === "all" ? "All" : reqStatusConfig[s].label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Mapping Matrix */}
@@ -198,7 +173,7 @@ export default function RequirementsPage() {
                   Requirement
                 </th>
                 <th className="px-3 py-3 text-left font-medium text-muted-foreground w-24">
-                  Status
+                  Priority
                 </th>
                 {controls.map((ctrl) => (
                   <th key={ctrl.id} className="px-2 py-3 text-center font-medium min-w-[80px]">
@@ -211,9 +186,11 @@ export default function RequirementsPage() {
                       <TooltipContent side="top" className="max-w-xs">
                         <p className="font-medium">{ctrl.title}</p>
                         <p className="text-xs mt-1">{ctrl.description}</p>
-                        <p className={cn("text-xs mt-1 font-medium", effectivenessConfig[ctrl.effectiveness].color)}>
-                          {effectivenessConfig[ctrl.effectiveness].label}
-                        </p>
+                        {ctrl.status && (
+                          <p className={cn("text-xs mt-1 font-medium", controlStatusConfig[ctrl.status].color)}>
+                            {controlStatusConfig[ctrl.status].label}
+                          </p>
+                        )}
                       </TooltipContent>
                     </Tooltip>
                   </th>
@@ -222,8 +199,6 @@ export default function RequirementsPage() {
             </thead>
             <tbody>
               {filteredReqs.map((req) => {
-                const statusCfg = reqStatusConfig[req.status];
-                const StatusIcon = statusCfg.icon;
                 return (
                   <tr key={req.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                     <td className="sticky left-0 z-10 bg-card px-4 py-3">
@@ -244,21 +219,20 @@ export default function RequirementsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <div className={cn("flex items-center gap-1 text-xs", statusCfg.color)}>
-                        <StatusIcon className="h-3 w-3" />
-                        <span>{statusCfg.label}</span>
-                      </div>
+                      <span className="text-xs capitalize text-muted-foreground">
+                        {req.priority ?? "—"}
+                      </span>
                     </td>
                     {controls.map((ctrl) => {
-                      const status = getMappingStatus(req.id, ctrl.id);
-                      if (!status) {
+                      const coverage = getMappingCoverage(req.id, ctrl.id);
+                      if (!coverage) {
                         return (
                           <td key={ctrl.id} className="px-2 py-3 text-center">
                             <span className="text-muted-foreground/30">—</span>
                           </td>
                         );
                       }
-                      const cfg = mappingStatusConfig[status];
+                      const cfg = coverageConfig[coverage];
                       return (
                         <td key={ctrl.id} className="px-2 py-3 text-center">
                           <Tooltip>
@@ -284,7 +258,7 @@ export default function RequirementsPage() {
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="font-medium">Legend:</span>
-        {Object.entries(mappingStatusConfig).map(([key, cfg]) => (
+        {Object.entries(coverageConfig).map(([key, cfg]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className={cn("h-3 w-3 rounded-full", cfg.bg)} />
             <span>{cfg.label}</span>

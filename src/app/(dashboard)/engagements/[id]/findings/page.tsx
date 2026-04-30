@@ -56,8 +56,8 @@ const severityConfig: Record<FindingSeverity, { label: string; color: string; bg
 const findingStatusConfig: Record<FindingStatus, { label: string; variant: "default" | "secondary" | "outline" | "active" | "review" }> = {
   draft: { label: "Draft", variant: "secondary" },
   in_review: { label: "In Review", variant: "review" },
-  accepted: { label: "Accepted", variant: "default" },
-  remediated: { label: "Remediated", variant: "active" },
+  open: { label: "Open", variant: "default" },
+  remediation: { label: "Remediation", variant: "active" },
   closed: { label: "Closed", variant: "outline" },
 };
 
@@ -285,14 +285,9 @@ export default function FindingsPage() {
                       <Badge variant={stCfg.variant as any} className="text-[10px]">
                         {stCfg.label}
                       </Badge>
-                      {finding.controlId && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {finding.controlId}
-                        </span>
-                      )}
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>By {finding.createdBy}</span>
+                      <span>{finding.createdById ? `By ${finding.createdById}` : ""}</span>
                       <span>{formatDate(finding.updatedAt)}</span>
                     </div>
                   </CardContent>
@@ -323,18 +318,7 @@ export default function FindingsPage() {
                       <Badge variant={findingStatusConfig[selectedFinding.status].variant as any}>
                         {findingStatusConfig[selectedFinding.status].label}
                       </Badge>
-                      {selectedFinding.controlId && (
-                        <span className="text-xs text-muted-foreground">
-                          Control: {selectedFinding.controlId} — {selectedFinding.controlTitle}
-                        </span>
-                      )}
                     </div>
-                    {selectedFinding.targetDate && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        Target: {formatDate(selectedFinding.targetDate)}
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardHeader>

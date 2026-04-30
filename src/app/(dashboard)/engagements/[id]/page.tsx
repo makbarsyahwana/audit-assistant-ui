@@ -28,9 +28,8 @@ import { useEngagements } from "@/hooks/useEngagements";
 import { formatDate, getInitials } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
-const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" | "draft" | "planning" | "archived"> = {
+const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" | "planning" | "archived"> = {
   active: "active",
-  review: "review",
   closed: "closed",
   planning: "planning",
   archived: "archived",
@@ -79,7 +78,7 @@ export default function EngagementDetailPage() {
       href: `/engagements/${engagementId}/documents`,
       icon: FileText,
       description: "Browse, search and upload documents",
-      count: engagement.stats.documentCount,
+      count: engagement.stats?.documentCount,
     },
     {
       label: "Requirements",
@@ -104,7 +103,7 @@ export default function EngagementDetailPage() {
       href: `/engagements/${engagementId}/findings`,
       icon: PenTool,
       description: "Finding drafting and tracking",
-      count: engagement.stats.findingCount,
+      count: engagement.stats?.findingCount,
     },
   ];
 
@@ -149,7 +148,7 @@ export default function EngagementDetailPage() {
 
       {/* Meta Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{engagement.entityName}</span>
+        {engagement.entityName && <span className="font-medium text-foreground">{engagement.entityName}</span>}
         <Separator orientation="vertical" className="h-4" />
         {engagement.framework && (
           <>
@@ -159,7 +158,7 @@ export default function EngagementDetailPage() {
         )}
         <span className="flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
-          {formatDate(engagement.periodStart)} — {formatDate(engagement.periodEnd)}
+          {engagement.periodStart ? formatDate(engagement.periodStart) : "—"} — {engagement.periodEnd ? formatDate(engagement.periodEnd) : "—"}
         </span>
       </div>
 
@@ -167,17 +166,17 @@ export default function EngagementDetailPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Documents"
-          value={engagement.stats.documentCount}
+          value={engagement.stats?.documentCount ?? 0}
           icon={FileText}
         />
         <StatCard
           title="Queries"
-          value={engagement.stats.queryCount}
+          value={engagement.stats?.queryCount ?? 0}
           icon={MessageSquare}
         />
         <StatCard
           title="Findings"
-          value={engagement.stats.findingCount}
+          value={engagement.stats?.findingCount ?? 0}
           icon={AlertTriangle}
         />
         <Card>
@@ -189,10 +188,10 @@ export default function EngagementDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <BasicNumberTicker value={engagement.stats.coveragePercent} delay={0.2} />%
+              <BasicNumberTicker value={engagement.stats?.coveragePercent ?? 0} delay={0.2} />%
             </div>
             <Progress
-              value={engagement.stats.coveragePercent}
+              value={engagement.stats?.coveragePercent ?? 0}
               className="mt-2 h-1.5"
             />
           </CardContent>
@@ -239,21 +238,21 @@ export default function EngagementDetailPage() {
       <div>
         <h2 className="text-base font-semibold mb-3">
           <Users className="inline mr-1.5 h-4 w-4" />
-          Team ({engagement.members.length})
+          Team ({(engagement.members ?? []).length})
         </h2>
         <div className="flex flex-wrap gap-3">
-          {engagement.members.map((member) => (
+          {(engagement.members ?? []).map((member) => (
             <div
               key={member.id}
               className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2"
             >
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                  {getInitials(member.name)}
+                  {getInitials(member.user.name)}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium">{member.name}</p>
+                <p className="text-sm font-medium">{member.user.name}</p>
                 <p className="text-[10px] text-muted-foreground capitalize">
                   {member.role.replace("_", " ")}
                 </p>

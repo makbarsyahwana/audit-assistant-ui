@@ -27,15 +27,12 @@ import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { useModeContext } from "@/contexts/ModeContext";
 import { useEngagements } from "@/hooks/useEngagements";
-import { mockDashboardStats, mockRecentQueries } from "@/lib/mock-data";
-import { mockLegalDashboardStats } from "@/lib/mock-data-legal";
-import { mockComplianceDashboardStats } from "@/lib/mock-data-compliance";
+import { useAuditTrail } from "@/hooks/useAuditTrail";
 import { formatDateTime, getInitials, truncate } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
-const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" | "draft" | "planning" | "archived"> = {
+const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" | "planning" | "archived"> = {
   active: "active",
-  review: "review",
   closed: "closed",
   planning: "planning",
   archived: "archived",
@@ -44,14 +41,18 @@ const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const { mode, config } = useModeContext();
-  const { engagements, loading } = useEngagements(mode);
+  const { engagements } = useEngagements(mode);
+  const { queryLogs } = useAuditTrail();
 
-  const stats =
-    mode === "legal"
-      ? mockLegalDashboardStats
-      : mode === "compliance"
-        ? mockComplianceDashboardStats
-        : mockDashboardStats;
+  const stats = {
+    totalEngagements: engagements.length,
+    activeEngagements: engagements.filter((e) => e.status === "active").length,
+    documentsIndexed: engagements.reduce((sum, e) => sum + (e.stats?.documentCount ?? 0), 0),
+    queriesThisWeek: queryLogs.length,
+  };
+
+  const recentQueries = queryLogs;
+
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 
   return (
@@ -118,7 +119,7 @@ export default function DashboardPage() {
               </TableHeader>
               <TableBody>
                 {engagements
-                  .filter((e) => e.status === "active" || e.status === "review")
+                  .filter((e) => e.status === "active")
                   .slice(0, 5)
                   .map((engagement) => (
                     <TableRow key={engagement.id}>
@@ -139,23 +140,23 @@ export default function DashboardPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {engagement.entityName}
+                        {engagement.entityName ?? "—"}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {engagement.stats.documentCount}
+                        {engagement.stats?.documentCount ?? 0}
                       </TableCell>
                       <TableCell>
                         <div className="flex -space-x-2">
-                          {engagement.members.slice(0, 3).map((member) => (
+                          {(engagement.members ?? []).slice(0, 3).map((member) => (
                             <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
                               <AvatarFallback className="text-[10px] bg-foreground text-background">
-                                {getInitials(member.name)}
+                                {getInitials(member.user.name)}
                               </AvatarFallback>
                             </Avatar>
                           ))}
-                          {engagement.members.length > 3 && (
+                          {(engagement.members ?? []).length > 3 && (
                             <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-medium">
-                              +{engagement.members.length - 3}
+                              +{(engagement.members ?? []).length - 3}
                             </div>
                           )}
                         </div>
@@ -178,7 +179,7 @@ export default function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mockRecentQueries.slice(0, 5).map((query) => (
+            {recentQueries.slice(0, 5).map((query) => (
               <div key={query.id} className="space-y-1.5">
                 <p className="text-sm font-medium leading-snug">
                   {truncate(query.query, 60)}

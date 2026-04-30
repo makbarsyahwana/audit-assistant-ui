@@ -3,9 +3,24 @@
 import { useState } from "react";
 import { FolderOpen, Upload, Search, Share2, TableProperties, MoreHorizontal, FileText, Users } from "lucide-react";
 import { useModeContext } from "@/contexts/ModeContext";
-import { mockRepositoryCollections, mockRepositoryExtracts } from "@/lib/mock-data-repository";
-import type { RepositoryCollection } from "@/lib/mock-data-repository";
+import { useEngagements } from "@/hooks/useEngagements";
+import type { RepositoryCollection, RepositoryExtract } from "@/types/repository";
+import type { Engagement } from "@/types/engagement";
 import { cn } from "@/lib/utils";
+
+function engagementToCollection(e: Engagement): RepositoryCollection {
+  return {
+    id: e.id,
+    name: e.name,
+    description: e.description ?? "",
+    documentCount: e.stats?.documentCount ?? 0,
+    totalSizeMb: 0,
+    lastUpdated: e.updatedAt,
+    mode: (e.mode ?? "audit") as RepositoryCollection["mode"],
+    tags: e.framework ? [e.framework] : [],
+    shared: (e.members?.length ?? 0) > 1,
+  };
+}
 
 function formatSize(mb: number): string {
   if (mb >= 1000) return `${(mb / 1000).toFixed(1)} GB`;
@@ -64,9 +79,10 @@ export default function RepositoryPage() {
   const { mode, config } = useModeContext();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"collections" | "extracts">("collections");
+  const { engagements, loading: engagementsLoading } = useEngagements();
 
-  const collections = mockRepositoryCollections.filter((c) => c.mode === mode);
-  const extracts = mockRepositoryExtracts.filter((e) => e.mode === mode);
+  const collections = engagements.filter((e) => !e.mode || e.mode === mode).map(engagementToCollection);
+  const extracts: RepositoryExtract[] = [];
 
   const filteredCollections = collections.filter(
     (c) =>
@@ -129,14 +145,32 @@ export default function RepositoryPage() {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {activeTab === "collections" && (
           <>
-            <p className="mb-3 text-xs text-muted-foreground">
-              {filteredCollections.length} collection{filteredCollections.length !== 1 ? "s" : ""}
-            </p>
+            {!engagementsLoading && (
+              <p className="mb-3 text-xs text-muted-foreground">
+                {filteredCollections.length} collection{filteredCollections.length !== 1 ? "s" : ""}
+              </p>
+            )}
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {filteredCollections.map((col) => (
-                <CollectionCard key={col.id} collection={col} />
-              ))}
-              {filteredCollections.length === 0 && (
+              {engagementsLoading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="rounded-lg border border-border bg-card p-4 animate-pulse">
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-md bg-muted" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3.5 w-1/2 rounded bg-muted" />
+                          <div className="h-3 w-3/4 rounded bg-muted" />
+                        </div>
+                      </div>
+                      <div className="mt-3 flex gap-4">
+                        <div className="h-3 w-16 rounded bg-muted" />
+                        <div className="h-3 w-12 rounded bg-muted" />
+                      </div>
+                    </div>
+                  ))
+                : filteredCollections.map((col) => (
+                    <CollectionCard key={col.id} collection={col} />
+                  ))}
+              {!engagementsLoading && filteredCollections.length === 0 && (
                 <div className="col-span-full py-16 text-center text-sm text-muted-foreground">
                   No collections found.
                 </div>

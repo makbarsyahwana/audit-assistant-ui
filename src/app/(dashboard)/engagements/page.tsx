@@ -41,9 +41,8 @@ import { useEngagements } from "@/hooks/useEngagements";
 import { formatDate, getInitials } from "@/lib/utils";
 import type { EngagementStatus } from "@/types/engagement";
 
-const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" | "draft" | "planning" | "archived"> = {
+const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" | "planning" | "archived"> = {
   active: "active",
-  review: "review",
   closed: "closed",
   planning: "planning",
   archived: "archived",
@@ -52,7 +51,6 @@ const statusVariantMap: Record<EngagementStatus, "active" | "review" | "closed" 
 const statusFilters: { label: string; value: EngagementStatus | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Active", value: "active" },
-  { label: "Review", value: "review" },
   { label: "Planning", value: "planning" },
   { label: "Closed", value: "closed" },
   { label: "Archived", value: "archived" },
@@ -67,7 +65,7 @@ export default function EngagementsPage() {
   const filtered = engagements.filter((e) => {
     const matchesSearch =
       e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.entityName.toLowerCase().includes(search.toLowerCase()) ||
+      (e.entityName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       (e.framework?.toLowerCase().includes(search.toLowerCase()) ?? false);
     const matchesStatus = statusFilter === "all" || e.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -236,7 +234,7 @@ export default function EngagementsPage() {
                         {engagement.name}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {engagement.entityName}
+                        {engagement.entityName ?? "—"}
                       </p>
                     </div>
                     <Badge
@@ -257,7 +255,7 @@ export default function EngagementsPage() {
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>
-                        {formatDate(engagement.periodStart)} — {formatDate(engagement.periodEnd)}
+                        {engagement.periodStart ? formatDate(engagement.periodStart) : "—"} — {engagement.periodEnd ? formatDate(engagement.periodEnd) : "—"}
                       </span>
                     </div>
                   </div>
@@ -267,10 +265,10 @@ export default function EngagementsPage() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Coverage</span>
                       <span className="font-medium">
-                        {engagement.stats.coveragePercent}%
+                        {engagement.stats?.coveragePercent ?? 0}%
                       </span>
                     </div>
-                    <Progress value={engagement.stats.coveragePercent} className="h-1.5" />
+                    <Progress value={engagement.stats?.coveragePercent ?? 0} className="h-1.5" />
                   </div>
 
                   {/* Stats Row */}
@@ -278,29 +276,29 @@ export default function EngagementsPage() {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <FileText className="h-3 w-3" />
-                        {engagement.stats.documentCount}
+                        {engagement.stats?.documentCount ?? 0}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        {engagement.members.length}
+                        {(engagement.members ?? []).length}
                       </span>
                     </div>
 
                     {/* Team Avatars */}
                     <div className="flex -space-x-1.5">
-                      {engagement.members.slice(0, 3).map((member) => (
+                      {(engagement.members ?? []).slice(0, 3).map((member) => (
                         <Avatar
                           key={member.id}
                           className="h-5 w-5 border-2 border-background"
                         >
                           <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
-                            {getInitials(member.name)}
+                            {getInitials(member.user.name)}
                           </AvatarFallback>
                         </Avatar>
                       ))}
-                      {engagement.members.length > 3 && (
+                      {(engagement.members ?? []).length > 3 && (
                         <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-muted text-[8px] font-medium">
-                          +{engagement.members.length - 3}
+                          +{(engagement.members ?? []).length - 3}
                         </div>
                       )}
                     </div>

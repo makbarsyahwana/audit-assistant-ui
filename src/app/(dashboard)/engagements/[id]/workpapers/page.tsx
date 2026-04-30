@@ -45,70 +45,81 @@ import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { useWorkpapers } from "@/hooks/useWorkpapers";
 import { cn, formatDate } from "@/lib/utils";
-import type { WorkpaperStatus, WorkpaperType } from "@/types/workpaper";
+import type { WorkpaperStatus, WorkpaperTemplate, Workpaper } from "@/types/workpaper";
 
 const statusConfig: Record<WorkpaperStatus, { label: string; variant: "default" | "secondary" | "outline" | "active" | "review" }> = {
   draft: { label: "Draft", variant: "secondary" },
   in_review: { label: "In Review", variant: "review" },
-  reviewed: { label: "Reviewed", variant: "default" },
   approved: { label: "Approved", variant: "active" },
   final: { label: "Final", variant: "outline" },
 };
 
-const typeConfig: Record<WorkpaperType, string> = {
-  standard: "Standard",
-  memo: "Memo",
+const templateConfig: Record<WorkpaperTemplate, string> = {
+  general: "General",
+  criteria_condition: "Criteria & Condition",
+  financial_memo: "Financial Memo",
   walkthrough: "Walkthrough",
-  test_of_controls: "Test of Controls",
 };
+
+interface WpField {
+  key: "criteria" | "condition" | "testing" | "result" | "conclusion";
+  label: string;
+}
+
+const wpFields: WpField[] = [
+  { key: "criteria", label: "Criteria" },
+  { key: "condition", label: "Condition" },
+  { key: "testing", label: "Testing" },
+  { key: "result", label: "Result" },
+  { key: "conclusion", label: "Conclusion" },
+];
 
 export default function WorkpapersPage() {
   const params = useParams();
   const engagementId = params.id as string;
-  const { workpapers, loading, updateSection } = useWorkpapers(engagementId);
+  const { workpapers, loading, updateField } = useWorkpapers(engagementId);
 
   const [selectedWpId, setSelectedWpId] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [generating, setGenerating] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   const selectedWp = workpapers.find((w) => w.id === selectedWpId);
 
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections((prev) => {
+  const toggleField = (fieldKey: string) => {
+    setExpandedFields((prev) => {
       const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
+      if (next.has(fieldKey)) {
+        next.delete(fieldKey);
       } else {
-        next.add(sectionId);
+        next.add(fieldKey);
       }
       return next;
     });
   };
 
-  const startEditing = (sectionId: string, content: string) => {
-    setEditingSection(sectionId);
+  const startEditing = (fieldKey: string, content: string) => {
+    setEditingField(fieldKey);
     setEditContent(content);
   };
 
   const saveEdit = () => {
-    if (editingSection && selectedWpId) {
-      updateSection(selectedWpId, editingSection, editContent);
-      setEditingSection(null);
+    if (editingField && selectedWpId) {
+      updateField(selectedWpId, editingField as keyof Workpaper, editContent);
+      setEditingField(null);
       setEditContent("");
     }
   };
 
-  const generateDraft = async (sectionId: string) => {
-    setGenerating(sectionId);
-    // Simulate AI draft generation
+  const generateDraft = async (fieldKey: string) => {
+    setGenerating(fieldKey);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     if (selectedWpId) {
       const mockDraft =
         "Based on the available evidence and framework requirements, the following observations were noted during the testing procedures.\n\nThe control was evaluated against the defined criteria and tested using a sample-based approach. Results indicate compliance with the stated requirements, with minor observations noted below.\n\n[AI-generated draft — review and customize as needed]";
-      updateSection(selectedWpId, sectionId, mockDraft);
+      updateField(selectedWpId, fieldKey as keyof Workpaper, mockDraft);
     }
     setGenerating(null);
   };
@@ -162,15 +173,15 @@ export default function WorkpapersPage() {
                   <Input placeholder="Workpaper title" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Type</label>
+                  <label className="text-sm font-medium">Template</label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Select template" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(typeConfig).map(([value, label]) => (
+                      {Object.entries(templateConfig).map(([value, label]) => (
                         <SelectItem key={value} value={value}>
-                          {label}
+                          {label as string}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -251,8 +262,8 @@ export default function WorkpapersPage() {
                 )}
                 onClick={() => {
                   setSelectedWpId(isSelected ? null : wp.id);
-                  setEditingSection(null);
-                  setExpandedSections(new Set());
+                  setEditingField(null);
+                  setExpandedFields(new Set());
                 }}
               >
                 <CardContent className="p-4 space-y-2">
@@ -263,13 +274,14 @@ export default function WorkpapersPage() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                      {typeConfig[wp.type]}
-                    </Badge>
-                    {wp.controlId && <span>• {wp.controlId}</span>}
+                    {wp.templateType && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {templateConfig[wp.templateType]}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>By {wp.preparedBy}</span>
+                    <span>{wp.createdById ? `By ${wp.createdById}` : ""}</span>
                     <span>{formatDate(wp.updatedAt)}</span>
                   </div>
                 </CardContent>
@@ -287,17 +299,10 @@ export default function WorkpapersPage() {
                   <div>
                     <CardTitle className="text-base">{selectedWp.title}</CardTitle>
                     <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                        {typeConfig[selectedWp.type]}
-                      </Badge>
-                      {selectedWp.controlId && (
-                        <span>Control: {selectedWp.controlId} — {selectedWp.controlTitle}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      <span>Prepared by: <span className="font-medium text-foreground">{selectedWp.preparedBy}</span></span>
-                      {selectedWp.reviewedBy && (
-                        <span>Reviewed by: <span className="font-medium text-foreground">{selectedWp.reviewedBy}</span></span>
+                      {selectedWp.templateType && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          {templateConfig[selectedWp.templateType]}
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -307,16 +312,17 @@ export default function WorkpapersPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {selectedWp.sections.map((section) => {
-                  const isExpanded = expandedSections.has(section.id);
-                  const isEditing = editingSection === section.id;
-                  const isGenerating = generating === section.id;
-                  const isEmpty = !section.content.trim();
+                {wpFields.map((field) => {
+                  const isExpanded = expandedFields.has(field.key);
+                  const isEditing = editingField === field.key;
+                  const isGenerating = generating === field.key;
+                  const content = selectedWp[field.key] || "";
+                  const isEmpty = !content.trim();
 
                   return (
-                    <div key={section.id} className="rounded-lg border">
+                    <div key={field.key} className="rounded-lg border">
                       <button
-                        onClick={() => toggleSection(section.id)}
+                        onClick={() => toggleField(field.key)}
                         className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-2">
@@ -325,18 +331,13 @@ export default function WorkpapersPage() {
                           ) : (
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
-                          <span>{section.label}</span>
+                          <span>{field.label}</span>
                           {isEmpty && (
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                               Empty
                             </Badge>
                           )}
                         </div>
-                        {section.citations && section.citations.length > 0 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {section.citations.length} citation{section.citations.length !== 1 ? "s" : ""}
-                          </Badge>
-                        )}
                       </button>
 
                       {isExpanded && (
@@ -348,7 +349,7 @@ export default function WorkpapersPage() {
                                 onChange={(e) => setEditContent(e.target.value)}
                                 rows={8}
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y scrollbar-thin"
-                                placeholder={`Enter ${section.label.toLowerCase()} content...`}
+                                placeholder={`Enter ${field.label.toLowerCase()} content...`}
                               />
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={saveEdit}>
@@ -358,7 +359,7 @@ export default function WorkpapersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setEditingSection(null)}
+                                  onClick={() => setEditingField(null)}
                                 >
                                   Cancel
                                 </Button>
@@ -375,14 +376,14 @@ export default function WorkpapersPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => startEditing(section.id, "")}
+                                      onClick={() => startEditing(field.key, "")}
                                     >
                                       <PenLine className="mr-1.5 h-3.5 w-3.5" />
                                       Write
                                     </Button>
                                     <Button
                                       size="sm"
-                                      onClick={() => generateDraft(section.id)}
+                                      onClick={() => generateDraft(field.key)}
                                       disabled={isGenerating}
                                     >
                                       {isGenerating ? (
@@ -397,14 +398,14 @@ export default function WorkpapersPage() {
                               ) : (
                                 <>
                                   <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                                    {section.content}
+                                    {content}
                                   </div>
                                   <Separator />
                                   <div className="flex gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => startEditing(section.id, section.content)}
+                                      onClick={() => startEditing(field.key, content)}
                                     >
                                       <PenLine className="mr-1.5 h-3.5 w-3.5" />
                                       Edit
@@ -412,7 +413,7 @@ export default function WorkpapersPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => generateDraft(section.id)}
+                                      onClick={() => generateDraft(field.key)}
                                       disabled={isGenerating}
                                     >
                                       {isGenerating ? (

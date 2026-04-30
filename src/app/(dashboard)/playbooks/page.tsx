@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, ChevronRight, Play, BookOpen, Search } from "lucide-react";
 import { useModeContext } from "@/contexts/ModeContext";
-import { mockPlaybooks } from "@/lib/mock-data-playbooks";
-import type { Playbook } from "@/lib/mock-data-playbooks";
+import { apiClient } from "@/lib/api";
+import type { Playbook } from "@/types/playbook";
 import { cn } from "@/lib/utils";
 
 function PlaybookCard({ playbook, onRun }: { playbook: Playbook; onRun: (p: Playbook) => void }) {
@@ -155,8 +155,13 @@ export default function PlaybooksPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [runningPlaybook, setRunningPlaybook] = useState<Playbook | null>(null);
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
 
-  const playbooks = mockPlaybooks.filter((p) => p.mode === mode);
+  useEffect(() => {
+    apiClient.get<Playbook[]>(`/playbooks?mode=${mode}`)
+      .then(setPlaybooks)
+      .catch(() => setPlaybooks([]));
+  }, [mode]);
   const categories = ["all", ...Array.from(new Set(playbooks.map((p) => p.category)))];
 
   const filtered = playbooks.filter((p) => {

@@ -98,7 +98,7 @@ export default function DocumentsPage() {
       (doc.controlId?.toLowerCase().includes(search.toLowerCase()) ?? false);
     const matchesType = typeFilter === "all" || doc.docType === typeFilter;
     const matchesConf =
-      confidentialityFilter === "all" || doc.confidentialityLevel === confidentialityFilter;
+      confidentialityFilter === "all" || doc.confidentiality === confidentialityFilter;
     return matchesSearch && matchesType && matchesConf;
   });
 
@@ -319,8 +319,7 @@ export default function DocumentsPage() {
                   <TableHead>Confidentiality</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead className="text-right">Size</TableHead>
-                  <TableHead className="text-right">Pages</TableHead>
-                  <TableHead className="text-right">Chunks</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -351,28 +350,27 @@ export default function DocumentsPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          doc.confidentialityLevel === "restricted"
+                          doc.confidentiality === "restricted"
                             ? "destructive"
-                            : doc.confidentialityLevel === "confidential"
+                            : doc.confidentiality === "confidential"
                             ? "default"
                             : "outline"
                         }
                         className="text-xs capitalize"
                       >
-                        {doc.confidentialityLevel}
+                        {doc.confidentiality}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground capitalize">
                       {doc.sourceSystem}
                     </TableCell>
                     <TableCell className="text-right text-sm">
-                      {formatFileSize(doc.fileSize)}
+                      {formatFileSize(doc.sizeBytes)}
                     </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {doc.pageCount ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {doc.chunkCount ?? "—"}
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {doc.ingestionStatus ?? "pending"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(doc.updatedAt)}

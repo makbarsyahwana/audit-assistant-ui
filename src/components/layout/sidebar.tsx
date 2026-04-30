@@ -36,6 +36,7 @@ const platformNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Knowledge Base", href: "/admin/knowledge-base", icon: BookOpen },
   { label: "Audit Trail", href: "/admin/audit-trail", icon: FileSearch },
   { label: "System Health", href: "/admin/health", icon: Activity },
   { label: "AI Governance", href: "/admin/governance", icon: Brain },

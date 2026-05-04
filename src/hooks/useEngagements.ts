@@ -14,7 +14,9 @@ export function useEngagements(mode: AppMode = "audit") {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<Engagement[]>("/engagements");
+      // API expects Prisma enum casing (AUDIT | LEGAL | COMPLIANCE); UI uses lowercase AppMode
+      const modeParam = mode ? `?mode=${encodeURIComponent(mode.toUpperCase())}` : "";
+      const data = await apiClient.get<Engagement[]>(`/engagements${modeParam}`);
       setEngagements(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch engagements");

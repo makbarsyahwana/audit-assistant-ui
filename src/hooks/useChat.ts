@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import type { ChatMessage, QueryRequest } from "@/types/chat";
+import type { ChatMessage, QueryComplexity, QueryRequest } from "@/types/chat";
 import { apiClient } from "@/lib/api";
 
 export function useChat(engagementId?: string) {
@@ -61,6 +61,13 @@ export function useChat(engagementId?: string) {
         const confidenceLevel =
           response.confidence >= 0.8 ? "high" : response.confidence >= 0.5 ? "medium" : "low";
 
+        const resolvedComplexity: QueryComplexity =
+          response.complexity === "simple" || response.complexity === "complex"
+            ? response.complexity
+            : response.agenticTrace
+              ? "complex"
+              : "simple";
+
         const assistantMessage: ChatMessage = {
           id: `msg_${response.runId}`,
           role: "assistant",
@@ -79,11 +86,10 @@ export function useChat(engagementId?: string) {
           confidenceLevel,
           explanation: response.explanation,
           timestamp: new Date().toISOString(),
-          complexity: response.complexity,
-          agenticTrace: response.agenticTrace ? {
-            complexity: response.complexity || "complex",
-            ...response.agenticTrace,
-          } : undefined,
+          complexity: resolvedComplexity,
+          agenticTrace: response.agenticTrace
+            ? { ...response.agenticTrace, complexity: resolvedComplexity }
+            : undefined,
         };
 
         setMessages((prev) => [...prev, assistantMessage]);

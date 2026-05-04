@@ -45,7 +45,7 @@ import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { useWorkpapers } from "@/hooks/useWorkpapers";
 import { cn, formatDate } from "@/lib/utils";
-import type { WorkpaperStatus, WorkpaperTemplate, Workpaper } from "@/types/workpaper";
+import type { WorkpaperStatus, WorkpaperTemplate } from "@/types/workpaper";
 
 const statusConfig: Record<WorkpaperStatus, { label: string; variant: "default" | "secondary" | "outline" | "active" | "review" }> = {
   draft: { label: "Draft", variant: "secondary" },
@@ -81,7 +81,7 @@ export default function WorkpapersPage() {
 
   const [selectedWpId, setSelectedWpId] = useState<string | null>(null);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
-  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<WpField["key"] | null>(null);
   const [editContent, setEditContent] = useState("");
   const [generating, setGenerating] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -100,26 +100,26 @@ export default function WorkpapersPage() {
     });
   };
 
-  const startEditing = (fieldKey: string, content: string) => {
+  const startEditing = (fieldKey: WpField["key"], content: string) => {
     setEditingField(fieldKey);
     setEditContent(content);
   };
 
   const saveEdit = () => {
-    if (editingField && selectedWpId) {
-      updateField(selectedWpId, editingField as keyof Workpaper, editContent);
+    if (editingField !== null && selectedWpId !== null) {
+      updateField(selectedWpId, editingField, editContent);
       setEditingField(null);
       setEditContent("");
     }
   };
 
-  const generateDraft = async (fieldKey: string) => {
+  const generateDraft = async (fieldKey: WpField["key"]) => {
     setGenerating(fieldKey);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     if (selectedWpId) {
       const mockDraft =
         "Based on the available evidence and framework requirements, the following observations were noted during the testing procedures.\n\nThe control was evaluated against the defined criteria and tested using a sample-based approach. Results indicate compliance with the stated requirements, with minor observations noted below.\n\n[AI-generated draft — review and customize as needed]";
-      updateField(selectedWpId, fieldKey as keyof Workpaper, mockDraft);
+      updateField(selectedWpId, fieldKey, mockDraft);
     }
     setGenerating(null);
   };

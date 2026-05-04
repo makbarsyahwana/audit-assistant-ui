@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Finding } from "@/types/finding";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useFindings(engagementId?: string) {
   const [findings, setFindings] = useState<Finding[]>([]);
@@ -16,7 +15,7 @@ export function useFindings(engagementId?: string) {
     try {
       const query = engagementId ? `?engagementId=${engagementId}` : "";
       const data = await apiClient.get<Finding[]>(`/findings${query}`);
-      setFindings(normalizeRecords(data, ["severity", "status"]));
+      setFindings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch findings");
     } finally {

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import type { Engagement } from "@/types/engagement";
 import type { AppMode } from "@/types/mode";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useEngagements(mode: AppMode = "audit") {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
@@ -16,7 +15,7 @@ export function useEngagements(mode: AppMode = "audit") {
     setError(null);
     try {
       const data = await apiClient.get<Engagement[]>("/engagements");
-      setEngagements(normalizeRecords(data, ["status", "mode"]));
+      setEngagements(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch engagements");
     } finally {

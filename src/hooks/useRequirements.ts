@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Requirement, Control, RequirementControlMapping } from "@/types/requirement";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useRequirements(engagementId?: string) {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -22,9 +21,9 @@ export function useRequirements(engagementId?: string) {
         apiClient.get<Control[]>(`/controls${query}`),
         apiClient.get<RequirementControlMapping[]>(`/requirement-control-mappings${query}`),
       ]);
-      setRequirements(normalizeRecords(reqs, ["priority"]));
-      setControls(normalizeRecords(ctrls, ["controlType", "status"]));
-      setMappings(normalizeRecords(maps, ["coverageLevel"]));
+      setRequirements(reqs);
+      setControls(ctrls);
+      setMappings(maps);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch requirements");
     } finally {

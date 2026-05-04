@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Workpaper } from "@/types/workpaper";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useWorkpapers(engagementId?: string) {
   const [workpapers, setWorkpapers] = useState<Workpaper[]>([]);
@@ -16,7 +15,7 @@ export function useWorkpapers(engagementId?: string) {
     try {
       const query = engagementId ? `?engagementId=${engagementId}` : "";
       const data = await apiClient.get<Workpaper[]>(`/workpapers${query}`);
-      setWorkpapers(normalizeRecords(data, ["templateType", "status"]));
+      setWorkpapers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch workpapers");
     } finally {

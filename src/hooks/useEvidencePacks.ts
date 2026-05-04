@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { EvidencePack, EvidencePackItem } from "@/types/evidence";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useEvidencePacks(engagementId?: string) {
   const [packs, setPacks] = useState<EvidencePack[]>([]);
@@ -17,7 +16,7 @@ export function useEvidencePacks(engagementId?: string) {
     try {
       const query = engagementId ? `?engagementId=${engagementId}` : "";
       const data = await apiClient.get<EvidencePack[]>(`/evidence-packs${query}`);
-      setPacks(normalizeRecords(data, ["status"]));
+      setPacks(data);
       setCandidates([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch evidence packs");

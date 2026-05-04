@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AuditDocument } from "@/types/document";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useDocuments(engagementId?: string) {
   const [documents, setDocuments] = useState<AuditDocument[]>([]);
@@ -16,7 +15,7 @@ export function useDocuments(engagementId?: string) {
     try {
       const query = engagementId ? `?engagementId=${engagementId}` : "";
       const data = await apiClient.get<AuditDocument[]>(`/documents${query}`);
-      setDocuments(normalizeRecords(data, ["docType", "confidentiality", "corpusScope", "ingestionStatus"]));
+      setDocuments(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch documents");
     } finally {

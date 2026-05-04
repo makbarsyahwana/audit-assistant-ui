@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AuditDocument } from "@/types/document";
 import { apiClient } from "@/lib/api";
-import { normalizeRecords } from "@/lib/normalize";
 
 export function useGlobalDocuments() {
   const [documents, setDocuments] = useState<AuditDocument[]>([]);
@@ -15,7 +14,7 @@ export function useGlobalDocuments() {
     setError(null);
     try {
       const data = await apiClient.get<{ data: AuditDocument[] }>("/documents?corpusScope=GLOBAL");
-      setDocuments(normalizeRecords(data.data, ["docType", "confidentiality", "corpusScope", "ingestionStatus"]));
+      setDocuments(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch global documents");
     } finally {

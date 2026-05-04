@@ -17,7 +17,8 @@ export interface EngagementMember {
   engagementId: string;
   role: string;
   joinedAt: string;
-  user: EngagementMemberUser;
+  /** May be absent on partial API payloads; always guard before access. */
+  user?: EngagementMemberUser;
 }
 
 export interface EngagementStats {

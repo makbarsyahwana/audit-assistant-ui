@@ -281,7 +281,11 @@ export default function WorkpapersPage() {
                     )}
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{wp.createdById ? `By ${wp.createdById}` : ""}</span>
+                    <span>
+                      {wp.createdBy?.name || wp.createdBy?.email
+                        ? `By ${wp.createdBy.name ?? wp.createdBy.email}`
+                        : ""}
+                    </span>
                     <span>{formatDate(wp.updatedAt)}</span>
                   </div>
                 </CardContent>

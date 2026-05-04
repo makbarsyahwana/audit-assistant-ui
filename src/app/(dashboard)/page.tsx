@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -62,8 +63,10 @@ function countQueryLogsThisWeek(
 export default function DashboardPage() {
   const { data: session } = useSession();
   const { mode, config } = useModeContext();
-  const { engagements } = useEngagements(mode);
-  const { queryLogs } = useAuditTrail();
+  const { engagements, loading: engagementsLoading } = useEngagements(mode);
+  const { queryLogs, loading: auditTrailLoading } = useAuditTrail();
+
+  const dashboardDataReady = !engagementsLoading && !auditTrailLoading;
 
   const stats = {
     totalEngagements: engagements.length,
@@ -88,32 +91,51 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* KPI Row */}
+      {/* KPI Row — values only after engagements + audit trail have loaded */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title={`Total ${config.terminology.topLevelEntityPlural}`}
-          value={stats.totalEngagements}
-          icon={Briefcase}
-          description={`All ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
-        />
-        <KpiCard
-          title={`Active ${config.terminology.topLevelEntityPlural}`}
-          value={stats.activeEngagements}
-          icon={TrendingUp}
-          description="Currently in progress"
-        />
-        <KpiCard
-          title="Documents Indexed"
-          value={stats.documentsIndexed}
-          icon={FileText}
-          description={`Across all ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
-        />
-        <KpiCard
-          title="Queries This Week"
-          value={stats.queriesThisWeek}
-          icon={MessageSquare}
-          description="AI-assisted queries"
-        />
+        {!dashboardDataReady ? (
+          <>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-4 rounded" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-40 mt-3" />
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <KpiCard
+              title={`Total ${config.terminology.topLevelEntityPlural}`}
+              value={stats.totalEngagements}
+              icon={Briefcase}
+              description={`All ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
+            />
+            <KpiCard
+              title={`Active ${config.terminology.topLevelEntityPlural}`}
+              value={stats.activeEngagements}
+              icon={TrendingUp}
+              description="Currently in progress"
+            />
+            <KpiCard
+              title="Documents Indexed"
+              value={stats.documentsIndexed}
+              icon={FileText}
+              description={`Across all ${config.terminology.topLevelEntityPlural.toLowerCase()}`}
+            />
+            <KpiCard
+              title="Queries This Week"
+              value={stats.queriesThisWeek}
+              icon={MessageSquare}
+              description="AI-assisted queries"
+            />
+          </>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -171,7 +193,7 @@ export default function DashboardPage() {
                           {(engagement.members ?? []).slice(0, 3).map((member) => (
                             <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
                               <AvatarFallback className="text-[10px] bg-foreground text-background">
-                                {getInitials(member.user.name)}
+                                {getInitials(member.user?.name ?? member.user?.email ?? "?")}
                               </AvatarFallback>
                             </Avatar>
                           ))}

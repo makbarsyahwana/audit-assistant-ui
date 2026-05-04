@@ -287,7 +287,11 @@ export default function FindingsPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>{finding.createdById ? `By ${finding.createdById}` : ""}</span>
+                      <span>
+                        {finding.createdBy?.name || finding.createdBy?.email
+                          ? `By ${finding.createdBy.name ?? finding.createdBy.email}`
+                          : ""}
+                      </span>
                       <span>{formatDate(finding.updatedAt)}</span>
                     </div>
                   </CardContent>

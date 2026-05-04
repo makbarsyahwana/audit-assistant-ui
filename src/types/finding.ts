@@ -1,6 +1,13 @@
 export type FindingSeverity = "critical" | "high" | "medium" | "low" | "informational";
 export type FindingStatus = "draft" | "in_review" | "open" | "remediation" | "closed";
 
+/** Populated when API includes `createdBy` on the finding (NestJS + Prisma). */
+export interface FindingCreator {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface Finding {
   id: string;
   engagementId: string;
@@ -15,6 +22,7 @@ export interface Finding {
   managementResponse?: string;
   citations?: unknown;
   createdById?: string;
+  createdBy?: FindingCreator;
   createdAt: string;
   updatedAt: string;
 }

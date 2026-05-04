@@ -78,7 +78,9 @@ export default function EngagementDetailPage() {
       href: `/engagements/${engagementId}/documents`,
       icon: FileText,
       description: "Browse, search and upload documents",
-      count: engagement.stats?.documentCount,
+      ...(engagement.stats != null
+        ? { count: engagement.stats.documentCount ?? 0 }
+        : {}),
     },
     {
       label: "Requirements",
@@ -103,7 +105,7 @@ export default function EngagementDetailPage() {
       href: `/engagements/${engagementId}/findings`,
       icon: PenTool,
       description: "Finding drafting and tracking",
-      count: engagement.stats?.findingCount,
+      ...(engagement.stats != null ? { count: engagement.stats.findingCount ?? 0 } : {}),
     },
   ];
 
@@ -241,24 +243,27 @@ export default function EngagementDetailPage() {
           Team ({(engagement.members ?? []).length})
         </h2>
         <div className="flex flex-wrap gap-3">
-          {(engagement.members ?? []).map((member) => (
+          {(engagement.members ?? []).map((member) => {
+            const displayName = member.user?.name ?? member.user?.email ?? "Member";
+            return (
             <div
               key={member.id}
               className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2"
             >
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                  {getInitials(member.user.name)}
+                  {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium">{member.user.name}</p>
+                <p className="text-sm font-medium">{displayName}</p>
                 <p className="text-[10px] text-muted-foreground capitalize">
                   {member.role.replace("_", " ")}
                 </p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -18,15 +18,25 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<AppMode>("audit");
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as AppMode | null;
-    if (stored && stored in MODE_CONFIGS) {
-      setModeState(stored);
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY) as AppMode | null;
+      if (stored && stored in MODE_CONFIGS) {
+        setModeState(stored);
+      }
+    } catch {
+      // private / disabled storage
     }
   }, []);
 
   const setMode = useCallback((next: AppMode) => {
     setModeState(next);
-    localStorage.setItem(STORAGE_KEY, next);
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // quota / private mode
+    }
   }, []);
 
   return (

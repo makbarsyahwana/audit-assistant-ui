@@ -38,6 +38,27 @@ const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" |
   archived: "archived",
 };
 
+/** Local Monday 00:00:00 for the calendar week containing *ref* (default: now). */
+function startOfLocalWeek(ref: Date = new Date()): Date {
+  const d = new Date(ref);
+  const day = d.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + mondayOffset);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function countQueryLogsThisWeek(
+  logs: { timestamp: string }[],
+  now: Date = new Date()
+): number {
+  const weekStart = startOfLocalWeek(now);
+  return logs.filter((l) => {
+    const t = new Date(l.timestamp);
+    return !Number.isNaN(t.getTime()) && t >= weekStart;
+  }).length;
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const { mode, config } = useModeContext();
@@ -48,7 +69,7 @@ export default function DashboardPage() {
     totalEngagements: engagements.length,
     activeEngagements: engagements.filter((e) => e.status === "active").length,
     documentsIndexed: engagements.reduce((sum, e) => sum + (e.stats?.documentCount ?? 0), 0),
-    queriesThisWeek: queryLogs.length,
+    queriesThisWeek: countQueryLogsThisWeek(queryLogs),
   };
 
   const recentQueries = queryLogs;

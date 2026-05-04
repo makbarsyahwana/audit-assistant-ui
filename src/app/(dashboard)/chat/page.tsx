@@ -23,6 +23,12 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
+    if (!loading) {
+      setIsDeepAnalysis(false);
+    }
+  }, [loading]);
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -60,7 +66,10 @@ export default function ChatPage() {
             </button>
           </div>
           <button
-            onClick={clearMessages}
+            onClick={() => {
+              clearMessages();
+              setIsDeepAnalysis(false);
+            }}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <Trash2 className="h-3 w-3" />

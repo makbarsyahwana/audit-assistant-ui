@@ -29,15 +29,8 @@ import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
 import { useModeContext } from "@/contexts/ModeContext";
 import { useEngagements } from "@/hooks/useEngagements";
 import { useAuditTrail } from "@/hooks/useAuditTrail";
+import { statusVariantMap } from "@/lib/status";
 import { formatDateTime, getInitials, truncate } from "@/lib/utils";
-import type { EngagementStatus } from "@/types/engagement";
-
-const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" | "planning" | "archived"> = {
-  active: "active",
-  closed: "closed",
-  planning: "planning",
-  archived: "archived",
-};
 
 /** Local Monday 00:00:00 for the calendar week containing *ref* (default: now). */
 function startOfLocalWeek(ref: Date = new Date()): Date {

@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { AuditDocument } from "@/types/document";
 import { apiClient } from "@/lib/api";
 
+interface PaginatedResponse<T> {
+  data: T[];
+}
+
 export function useDocuments(engagementId?: string) {
   const [documents, setDocuments] = useState<AuditDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +17,15 @@ export function useDocuments(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      const query = engagementId ? `?engagementId=${engagementId}` : "";
-      const data = await apiClient.get<AuditDocument[]>(`/documents${query}`);
-      setDocuments(data);
+      const params = new URLSearchParams();
+      if (engagementId) {
+        params.set("engagementId", engagementId);
+      }
+      const query = params.toString();
+      const response = await apiClient.get<PaginatedResponse<AuditDocument>>(
+        `/documents${query ? `?${query}` : ""}`
+      );
+      setDocuments(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch documents");
     } finally {

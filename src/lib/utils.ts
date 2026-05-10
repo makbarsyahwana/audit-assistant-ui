@@ -47,9 +47,12 @@ export function truncate(str: string, maxLength: number): string {
 }
 
 export function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
+  const trimmed = name.trim();
+  if (!trimmed) return "U";
+
+  return trimmed
+    .split(/\s+/)
+    .map((n) => n[0] ?? "")
     .join("")
     .toUpperCase()
     .slice(0, 2);

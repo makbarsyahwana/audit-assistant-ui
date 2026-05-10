@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { Requirement, Control, RequirementControlMapping } from "@/types/requirement";
 import { apiClient } from "@/lib/api";
 
+interface PaginatedResponse<T> {
+  data: T[];
+}
+
 export function useRequirements(engagementId?: string) {
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
@@ -15,14 +19,18 @@ export function useRequirements(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      const query = engagementId ? `?engagementId=${engagementId}` : "";
+      const params = new URLSearchParams();
+      if (engagementId) {
+        params.set("engagementId", engagementId);
+      }
+      const query = params.toString();
       const [reqs, ctrls, maps] = await Promise.all([
-        apiClient.get<Requirement[]>(`/requirements${query}`),
-        apiClient.get<Control[]>(`/controls${query}`),
-        apiClient.get<RequirementControlMapping[]>(`/requirement-control-mappings${query}`),
+        apiClient.get<PaginatedResponse<Requirement>>(`/requirements${query ? `?${query}` : ""}`),
+        apiClient.get<PaginatedResponse<Control>>(`/controls${query ? `?${query}` : ""}`),
+        apiClient.get<RequirementControlMapping[]>(`/mappings${query ? `?${query}` : ""}`),
       ]);
-      setRequirements(reqs);
-      setControls(ctrls);
+      setRequirements(reqs.data);
+      setControls(ctrls.data);
       setMappings(maps);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch requirements");

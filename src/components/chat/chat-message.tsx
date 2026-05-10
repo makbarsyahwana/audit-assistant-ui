@@ -18,6 +18,21 @@ interface ChatMessageProps {
   detailLevel?: DetailLevel;
 }
 
+// Security policy: keep `rehype-raw` disabled so raw HTML in markdown is escaped.
+const safeUrlTransform = (url: string): string => {
+  if (url.startsWith("/") || url.startsWith("#")) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const allowedProtocols = new Set(["http:", "https:", "mailto:"]);
+    return allowedProtocols.has(parsed.protocol) ? url : "#";
+  } catch {
+    return "#";
+  }
+};
+
 export function ChatMessage({ message, detailLevel = "user" }: ChatMessageProps) {
   const { data: session } = useSession();
   const isUser = message.role === "user";
@@ -45,6 +60,7 @@ export function ChatMessage({ message, detailLevel = "user" }: ChatMessageProps)
       <div className="prose-harvey text-sm leading-[1.8]">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
+          urlTransform={safeUrlTransform}
           components={{
             p: ({ children }) => <p className="mb-3 last:mb-0 font-serif text-foreground leading-[1.8]">{children}</p>,
             ul: ({ children }) => <ul className="mb-3 pl-5 space-y-1 list-disc">{children}</ul>,

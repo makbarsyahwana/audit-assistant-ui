@@ -47,6 +47,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { config } = useModeContext();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -118,12 +119,15 @@ export function Sidebar() {
           icon: LayoutDashboard,
         })}
 
-        <div className="my-3 border-t border-sidebar-border" />
-
-        <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/35">
-          Admin
-        </p>
-        {adminNav.map(renderNavItem)}
+        {isAdmin && (
+          <>
+            <div className="my-3 border-t border-sidebar-border" />
+            <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/35">
+              Admin
+            </p>
+            {adminNav.map(renderNavItem)}
+          </>
+        )}
       </nav>
     </aside>
   );

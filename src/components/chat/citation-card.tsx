@@ -1,8 +1,6 @@
 "use client";
 
-import { FileText, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ConfidenceIndicator } from "@/components/ui/confidence-indicator";
 import type { Citation } from "@/types/chat";
 import { truncate } from "@/lib/utils";
@@ -48,10 +46,6 @@ export function CitationCard({ citation, index }: CitationCardProps) {
 
         <div className="flex items-center justify-between pt-1">
           <ConfidenceIndicator value={citation.score} size="sm" />
-          <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            <ExternalLink className="h-3 w-3" />
-            View source
-          </button>
         </div>
       </CardContent>
     </Card>

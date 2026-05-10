@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { EvidencePack, EvidencePackItem } from "@/types/evidence";
 import { apiClient } from "@/lib/api";
 
+interface PaginatedResponse<T> {
+  data: T[];
+}
+
 export function useEvidencePacks(engagementId?: string) {
   const [packs, setPacks] = useState<EvidencePack[]>([]);
   const [candidates, setCandidates] = useState<EvidencePackItem[]>([]);
@@ -14,9 +18,15 @@ export function useEvidencePacks(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      const query = engagementId ? `?engagementId=${engagementId}` : "";
-      const data = await apiClient.get<EvidencePack[]>(`/evidence-packs${query}`);
-      setPacks(data);
+      const params = new URLSearchParams();
+      if (engagementId) {
+        params.set("engagementId", engagementId);
+      }
+      const query = params.toString();
+      const response = await apiClient.get<PaginatedResponse<EvidencePack>>(
+        `/evidence-packs${query ? `?${query}` : ""}`
+      );
+      setPacks(response.data);
       setCandidates([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch evidence packs");

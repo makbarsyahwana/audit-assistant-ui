@@ -24,16 +24,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BasicNumberTicker } from "@/components/fancy/basic-number-ticker";
 import { VerticalCutReveal } from "@/components/fancy/vertical-cut-reveal";
-import { useEngagements } from "@/hooks/useEngagements";
+import { useEngagement } from "@/hooks/useEngagements";
+import { statusVariantMap } from "@/lib/status";
 import { formatDate, getInitials } from "@/lib/utils";
-import type { EngagementStatus } from "@/types/engagement";
-
-const statusVariantMap: Record<EngagementStatus, "active" | "closed" | "draft" | "planning" | "archived"> = {
-  active: "active",
-  closed: "closed",
-  planning: "planning",
-  archived: "archived",
-};
 
 interface QuickLink {
   label: string;
@@ -46,9 +39,7 @@ interface QuickLink {
 export default function EngagementDetailPage() {
   const params = useParams();
   const engagementId = params.id as string;
-  const { getEngagement, loading: engLoading } = useEngagements();
-
-  const engagement = getEngagement(engagementId);
+  const { engagement, loading: engLoading } = useEngagement(engagementId);
 
   if (engLoading) {
     return <EngagementDetailSkeleton />;

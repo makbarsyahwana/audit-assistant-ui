@@ -44,3 +44,41 @@ export function useEngagements(mode: AppMode = "audit") {
     getEngagement,
   };
 }
+
+export function useEngagement(engagementId?: string) {
+  const [engagement, setEngagement] = useState<Engagement | null>(null);
+  const [loading, setLoading] = useState(Boolean(engagementId));
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchEngagement = useCallback(async () => {
+    if (!engagementId) {
+      setEngagement(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await apiClient.get<Engagement>(`/engagements/${encodeURIComponent(engagementId)}`);
+      setEngagement(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch engagement");
+      setEngagement(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [engagementId]);
+
+  useEffect(() => {
+    fetchEngagement();
+  }, [fetchEngagement]);
+
+  return {
+    engagement,
+    loading,
+    error,
+    refetch: fetchEngagement,
+  };
+}

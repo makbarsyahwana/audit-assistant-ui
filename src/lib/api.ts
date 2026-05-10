@@ -1,3 +1,5 @@
+import { getSession, signOut } from "next-auth/react";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface ApiError {
@@ -8,14 +10,9 @@ interface ApiError {
 
 class ApiClient {
   private baseUrl: string;
-  private token: string | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-  }
-
-  setToken(token: string | null) {
-    this.token = token;
   }
 
   private async request<T>(
@@ -27,8 +24,9 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
+    const session = await getSession();
+    if (session?.accessToken) {
+      headers["Authorization"] = `Bearer ${session.accessToken}`;
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -37,6 +35,10 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        await signOut({ callbackUrl: "/login" });
+      }
+
       const error: ApiError = await response.json().catch(() => ({
         message: response.statusText,
         statusCode: response.status,

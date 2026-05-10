@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { Finding } from "@/types/finding";
 import { apiClient } from "@/lib/api";
 
+interface PaginatedResponse<T> {
+  data: T[];
+}
+
 export function useFindings(engagementId?: string) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +17,15 @@ export function useFindings(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      const query = engagementId ? `?engagementId=${engagementId}` : "";
-      const data = await apiClient.get<Finding[]>(`/findings${query}`);
-      setFindings(data);
+      const params = new URLSearchParams();
+      if (engagementId) {
+        params.set("engagementId", engagementId);
+      }
+      const query = params.toString();
+      const response = await apiClient.get<PaginatedResponse<Finding>>(
+        `/findings${query ? `?${query}` : ""}`
+      );
+      setFindings(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch findings");
     } finally {

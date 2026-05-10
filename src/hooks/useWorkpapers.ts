@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import type { Workpaper } from "@/types/workpaper";
 import { apiClient } from "@/lib/api";
 
+interface PaginatedResponse<T> {
+  data: T[];
+}
+
 export function useWorkpapers(engagementId?: string) {
   const [workpapers, setWorkpapers] = useState<Workpaper[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +17,15 @@ export function useWorkpapers(engagementId?: string) {
     setLoading(true);
     setError(null);
     try {
-      const query = engagementId ? `?engagementId=${engagementId}` : "";
-      const data = await apiClient.get<Workpaper[]>(`/workpapers${query}`);
-      setWorkpapers(data);
+      const params = new URLSearchParams();
+      if (engagementId) {
+        params.set("engagementId", engagementId);
+      }
+      const query = params.toString();
+      const response = await apiClient.get<PaginatedResponse<Workpaper>>(
+        `/workpapers${query ? `?${query}` : ""}`
+      );
+      setWorkpapers(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch workpapers");
     } finally {

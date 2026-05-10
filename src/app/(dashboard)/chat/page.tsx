@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Trash2, Eye, ShieldCheck } from "lucide-react";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -12,7 +13,9 @@ import { cn } from "@/lib/utils";
 export type DetailLevel = "user" | "audit";
 
 export default function ChatPage() {
-  const { messages, loading, sendMessage, clearMessages } = useChat();
+  const searchParams = useSearchParams();
+  const engagementId = searchParams.get("engagement") ?? undefined;
+  const { messages, loading, sendMessage, clearMessages } = useChat(engagementId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [detailLevel, setDetailLevel] = useState<DetailLevel>("user");
   const [isDeepAnalysis, setIsDeepAnalysis] = useState(false);

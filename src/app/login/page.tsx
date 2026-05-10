@@ -76,7 +76,6 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@audit.dev"
                   required
                   className="flex h-9 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
                 />
@@ -104,15 +103,6 @@ export default function LoginPage() {
               >
                 {loading ? "Signing in…" : "Sign in"}
               </button>
-
-              <div className="mt-3 rounded-md bg-muted border border-border p-3">
-                <p className="text-xs font-medium text-foreground mb-1.5">Demo credentials</p>
-                <div className="space-y-0.5 text-xs text-muted-foreground">
-                  <p>admin@audit.dev · demo123</p>
-                  <p>manager@audit.dev · demo123</p>
-                  <p>auditor@audit.dev · demo123</p>
-                </div>
-              </div>
             </form>
           </CardContent>
         </Card>
